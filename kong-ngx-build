@@ -186,10 +186,14 @@ main() {
         fi
 
         pushd bundle
-          for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
-            echo "Applying OpenResty patch $patch_file"
-            safe_patch $patch_file
-          done
+          if [ ! -f .patch_applied ]; then
+            touch .patch_applied
+
+            for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
+              echo "Applying OpenResty patch $patch_file"
+              patch -p1 < $patch_file
+            done
+          fi
         popd
 
         eval ./configure ${OPENRESTY_OPTS[*]}
@@ -245,17 +249,6 @@ main() {
   fi
 
   succ "Build finished in $SECONDS seconds. Enjoy!"
-}
-
-safe_patch() {
-  set +e
-  patch -p1 -N --dry-run --silent < $1 2>/dev/null
-  ret=$?
-  set -e
-
-  if [ $ret -eq 0 ]; then
-    patch -p1 < $1
-  fi
 }
 
 show_usage() {
