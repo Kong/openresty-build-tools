@@ -162,6 +162,8 @@ main() {
 
     warn "Building OpenResty..."
 
+    OPENRESTY_PATCHES_DOWNLOAD=`realpath $OPENRESTY_PATCHES_DOWNLOAD`
+
     pushd $OPENRESTY_DOWNLOAD
       if [ ! -f Makefile ]; then
         OPENRESTY_OPTS=(
@@ -184,7 +186,7 @@ main() {
         fi
 
         pushd bundle
-          for patch_file in $(ls -1 ../../../$OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
+          for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
             echo "Applying OpenResty patch $patch_file"
             safe_patch $patch_file
           done
