@@ -211,9 +211,10 @@ main() {
 
 
   if [ ! -z "$LUAROCKS_VER" ]; then
+    LUAROCKS_INSTALL=$PREFIX/luarocks
+
     if [ ! -d $LUAROCKS_INSTALL ]; then
       LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
-      LUAROCKS_INSTALL=$PREFIX/luarocks
 
       if [ ! -d $LUAROCKS_DOWNLOAD ]; then
         warn "LuaRocks source not found, downloading..."
