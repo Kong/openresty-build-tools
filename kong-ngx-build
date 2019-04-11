@@ -79,7 +79,7 @@ main() {
     fatal "prefix can not be empty"
   fi
 
-  PREFIX=`pwd`/$PREFIX
+  PREFIX=`realpath $PREFIX`
 
   if [ -z "$OPENRESTY_VER" ]; then
     show_usage
