@@ -12,7 +12,7 @@ is so you always ends up with the same binary, every time.
 ```
 
 # Usage
-```shell
+```
 $ ./kong-ngx-build -h
 Build basic components (OpenResty, OpenSSL and LuaRocks for Kong)
 
