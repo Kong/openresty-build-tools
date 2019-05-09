@@ -28,6 +28,8 @@ Optional arguments:
                                 WARNING: this removes everything inside the work directory
       --no-artifact-cache       disable artifact caching and re-install all the softwares
                                 WARNING: this removes everything inside the prefix directory
+      --no-openresty-patches    do not apply openresty-patches while compiling OpenResty, patching is
+                                enabled by default
       --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks
                                 will not be built
       --debug                   disable compile time optimizations and memory pooling for NGINX,

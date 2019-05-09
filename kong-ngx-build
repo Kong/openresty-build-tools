@@ -9,6 +9,7 @@ OPENSSL_VER=
 LUAROCKS_VER=
 BUILD_CACHE=1
 ARTIFACT_CACHE=1
+OPENRESTY_PATCHES=1
 DEBUG=0
 NPROC=`nproc`
 
@@ -43,6 +44,10 @@ main() {
         ;;
       --no-artifact-cache)
         ARTIFACT_CACHE=0
+        shift 1
+        ;;
+      --no-openresty-patches)
+        OPENRESTY_PATCHES=0
         shift 1
         ;;
       --debug)
@@ -121,7 +126,7 @@ main() {
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
-      if [ ! -f Makefile ]; then
+      if [[ ($OPENSSL_VER == 1.0.* && ! -d include/openssl) || ! -f Makefile ]]; then
           OPENSSL_OPTS=(
             "shared"
             "no-tests"
@@ -146,6 +151,15 @@ main() {
   fi
 
   if [ ! -d $OPENRESTY_INSTALL ]; then
+    if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
+      notice "Patched OpenResty found, removing..."
+      rm -rf $OPENRESTY_DOWNLOAD
+
+    elif [[ $OPENRESTY_PATCHES == 1 && ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
+      rm -f $OPENRESTY_DOWNLOAD/Makefile
+    fi
+
+
     if [ ! -d $OPENRESTY_DOWNLOAD ]; then
       warn "OpenResty source not found, downloading..."
       pushd $DOWNLOAD_CACHE
@@ -153,7 +167,7 @@ main() {
       popd
     fi
 
-    if [ ! -d $OPENRESTY_PATCHES_DOWNLOAD ]; then
+    if [[ $OPENRESTY_PATCHES == 1 && ! -d $OPENRESTY_PATCHES_DOWNLOAD ]]; then
       warn "Kong OpenResty patches not found, downloading..."
       pushd $DOWNLOAD_CACHE
         curl -s -S -L https://github.com/Kong/openresty-patches/archive/master.tar.gz | tar xz
@@ -185,16 +199,18 @@ main() {
             OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
         fi
 
-        pushd bundle
-          if [ ! -f .patch_applied ]; then
-            touch .patch_applied
+        if [ $OPENRESTY_PATCHES == 1 ]; then
+          pushd bundle
+            if [ ! -f .patch_applied ]; then
+              for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
+                echo "Applying OpenResty patch $patch_file"
+                patch -p1 < $patch_file
+              done
 
-            for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
-              echo "Applying OpenResty patch $patch_file"
-              patch -p1 < $patch_file
-            done
-          fi
-        popd
+              touch .patch_applied
+            fi
+          popd
+        fi
 
         eval ./configure ${OPENRESTY_OPTS[*]}
       fi
@@ -267,6 +283,8 @@ show_usage() {
   echo -e "                                \033[1;31mWARNING:\033[0m this removes everything inside the work directory"
   echo "      --no-artifact-cache       disable artifact caching and re-install all the softwares"
   echo -e "                                \033[1;31mWARNING:\033[0m this removes everything inside the prefix directory"
+  echo "      --no-openresty-patches    do not apply openresty-patches while compiling OpenResty, patching is"
+  echo "                                enabled by default"
   echo "      --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks"
   echo "                                will not be built"
   echo "      --debug                   disable compile time optimizations and memory pooling for NGINX,"
