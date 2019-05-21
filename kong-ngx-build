@@ -144,9 +144,15 @@ main() {
       if [[ ($OPENSSL_VER == 1.0.* && ! -d include/openssl) || ! -f Makefile ]]; then
           OPENSSL_OPTS=(
             "shared"
-            "no-tests"
             "--prefix=$OPENSSL_INSTALL"
           )
+
+          if [[ $OPENSSL_VER == 1.1.* ]]; then
+            OPENSSL_OPTS+=('no-unit-test')
+
+          else
+            OPENSSL_OPTS+=('no-tests')
+          fi
 
           if [ $DEBUG == 1 ]; then
             OPENSSL_OPTS+=('-d')
