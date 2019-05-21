@@ -2,6 +2,7 @@
 
 set -e
 
+SCRIPT_PATH=$(dirname "$(realpath $0)")
 PREFIX=
 DOWNLOAD_CACHE=work
 OPENRESTY_VER=
@@ -12,6 +13,8 @@ ARTIFACT_CACHE=1
 OPENRESTY_PATCHES=1
 DEBUG=0
 NPROC=`nproc`
+OS=
+OS_VER=
 
 PARAMS=""
 
@@ -94,6 +97,18 @@ main() {
   if [ -z "$OPENSSL_VER" ]; then
     show_usage
     fatal "OpenSSL version can not be empty"
+  fi
+
+  # retrieve OS info of OS-specific patches
+
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    OS_VER=$VERSION_ID
+
+  elif type lsb_release >/dev/null 2>&1; then
+    OS=$(lsb_release -si)
+    OS_VER=$(lsb_release -sr)
   fi
 
   if [ $BUILD_CACHE == 0 ]; then
@@ -210,6 +225,17 @@ main() {
               touch .patch_applied
             fi
           popd
+        fi
+
+        # apply non Kong-specific patches
+
+        if [[ $OPENRESTY_VER == 1.13.6.* ]]; then
+          if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
+            notice "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
+            pushd bundle/nginx-1.13.6
+              patch --forward -p1 < $SCRIPT_PATH/patches/nginx-1.13.6-rm_glibc_crypt_r_workaround.patch || true
+            popd
+          fi
         fi
 
         eval ./configure ${OPENRESTY_OPTS[*]}
