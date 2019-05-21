@@ -161,7 +161,7 @@ main() {
         eval ./config ${OPENSSL_OPTS[*]}
       fi
 
-      make
+      make -j$NPROC
       make install_sw
     popd
 
