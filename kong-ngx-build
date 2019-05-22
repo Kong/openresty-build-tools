@@ -220,7 +220,7 @@ main() {
           "-j$NPROC"
         )
 
-        OPENRESTY_OPTS+=($NGINX_EXTRA_MODULES)
+        OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
 
         if [ $DEBUG == 1 ]; then
             OPENRESTY_OPTS+=('--with-debug')
