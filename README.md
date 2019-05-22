@@ -32,6 +32,8 @@ Optional arguments:
                                 enabled by default
       --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks
                                 will not be built
+      --add-module              path to additional NGINX module to be built, this option can be repeated
+                                and will be passed to NGINX's configure in the order they were specified
       --debug                   disable compile time optimizations and memory pooling for NGINX,
                                 LuaJIT and OpenSSL to help debugging
       -j, --jobs                concurrency level to use when building, defaults to number of CPU
