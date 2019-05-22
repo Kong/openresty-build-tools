@@ -15,6 +15,7 @@ DEBUG=0
 NPROC=`nproc`
 OS=
 OS_VER=
+NGINX_EXTRA_MODULES=()
 
 PARAMS=""
 
@@ -59,6 +60,10 @@ main() {
         ;;
       --work)
         DOWNLOAD_CACHE=$2
+        shift 2
+        ;;
+      --add-module)
+        NGINX_EXTRA_MODULES+=("--add-module=$2")
         shift 2
         ;;
       -h|--help)
@@ -215,6 +220,8 @@ main() {
           "-j$NPROC"
         )
 
+        OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
+
         if [ $DEBUG == 1 ]; then
             OPENRESTY_OPTS+=('--with-debug')
             OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
@@ -319,6 +326,8 @@ show_usage() {
   echo "                                enabled by default"
   echo "      --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks"
   echo "                                will not be built"
+  echo "      --add-module              path to additional NGINX module to be built, this option can be repeated"
+  echo "                                and will be passed to NGINX's configure in the order they were specified"
   echo "      --debug                   disable compile time optimizations and memory pooling for NGINX,"
   echo "                                LuaJIT and OpenSSL to help debugging"
   echo "      -j, --jobs                concurrency level to use when building, defaults to number of CPU"
