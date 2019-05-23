@@ -50,6 +50,10 @@ main() {
         LUAROCKS_VER=$2
         shift 2
         ;;
+      --luarocks_sha)
+        LUAROCKS_SHA=$2
+        shift 2
+        ;;
       --no-build-cache)
         BUILD_CACHE=0
         shift 1
@@ -290,7 +294,11 @@ main() {
       if [ ! -d $LUAROCKS_DOWNLOAD ]; then
         warn "LuaRocks source not found, downloading..."
         pushd $DOWNLOAD_CACHE
-          curl -s -S -L https://luarocks.org/releases/luarocks-$LUAROCKS_VER.tar.gz | tar xz
+          curl -sSLO https://luarocks.org/releases/luarocks-$LUAROCKS_VER.tar.gz
+          if [ ! -z ${LUAROCKS_SHA+x} ]; then
+            echo "$LUAROCKS_SHA luarocks-$LUAROCKS_VER.tar.gz" | sha256sum -c -
+          fi
+          tar -xzvf luarocks-$LUAROCKS_VER.tar.gz
         popd
       fi
 
