@@ -38,6 +38,10 @@ main() {
         OPENSSL_VER=$2
         shift 2
         ;;
+      --openssl_sha)
+        OPENSSL_SHA=$2
+        shift 2
+        ;;
       --luarocks)
         LUAROCKS_VER=$2
         shift 2
@@ -139,7 +143,11 @@ main() {
     if [ ! -d $OPENSSL_DOWNLOAD ]; then
       warn "OpenSSL source not found, downloading..."
       pushd $DOWNLOAD_CACHE
-        curl -s -S -L http://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz | tar xz
+        curl -sSLO https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz
+        if [ ! -z ${OPENSSL_SHA+x} ]; then
+          echo "$OPENSSL_SHA openssl-$OPENSSL_VER.tar.gz" | sha256sum -c -
+        fi
+        tar -xzvf openssl-$OPENSSL_VER.tar.gz
       popd
     fi
 
