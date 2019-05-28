@@ -361,36 +361,37 @@ show_usage() {
 }
 
 notice() {
-    builtin echo -en "\033[1m"
-    echo "NOTICE: $@"
-    builtin echo -en "\033[0m"
+  builtin echo -en "\033[1m"
+  echo "NOTICE: $@"
+  builtin echo -en "\033[0m"
 }
 
 succ() {
-    builtin echo -en "\033[1;32m"
-    echo "SUCCESS: $@"
-    builtin echo -en "\033[0m"
+  builtin echo -en "\033[1;32m"
+  echo "SUCCESS: $@"
+  builtin echo -en "\033[0m"
 }
 
 warn() {
-    builtin echo -en "\033[1;33m"
-    echo "WARN: $@"
-    builtin echo -en "\033[0m"
+  builtin echo -en "\033[1;33m"
+  echo "WARN: $@"
+  builtin echo -en "\033[0m"
 }
 
 fatal() {
-    builtin echo -en "\033[1;31m"
-    echo "FATAL: $@"
-    builtin echo -en "\033[0m"
-    exit 1
+  builtin echo -en "\033[1;31m"
+  echo "FATAL: $@"
+  builtin echo -en "\033[0m"
+  exit 1
 }
 
 err() {
-    builtin echo -en "\033[1;31m"
-    echo "ERR: $@"
-    builtin echo -en "\033[0m"
-    exit 1
+  builtin echo -en "\033[1;31m"
+  echo "ERR: $@"
+  builtin echo -en "\033[0m"
+  exit 1
 }
 
-
 main $@
+
+# vi: ts=2 sts=2 sw=2 et
