@@ -10,7 +10,7 @@ OPENSSL_VER=
 LUAROCKS_VER=
 BUILD_CACHE=1
 ARTIFACT_CACHE=1
-OPENRESTY_PATCHES=1
+OPENRESTY_PATCHES=master
 DEBUG=0
 NPROC=`nproc`
 OS=
@@ -65,6 +65,10 @@ main() {
       --no-openresty-patches)
         OPENRESTY_PATCHES=0
         shift 1
+        ;;
+      --openresty-patches)
+        OPENRESTY_PATCHES=$2
+        shift 2
         ;;
       --debug)
         DEBUG=1
@@ -138,7 +142,6 @@ main() {
 
   OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL_VER
   OPENRESTY_DOWNLOAD=$DOWNLOAD_CACHE/openresty-$OPENRESTY_VER
-  OPENRESTY_PATCHES_DOWNLOAD=$DOWNLOAD_CACHE/openresty-patches-master
 
   mkdir -p $DOWNLOAD_CACHE $PREFIX
 
@@ -197,7 +200,7 @@ main() {
       notice "Patched OpenResty found, removing..."
       rm -rf $OPENRESTY_DOWNLOAD
 
-    elif [[ $OPENRESTY_PATCHES == 1 && ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
+    elif [[ $OPENRESTY_PATCHES != 0 && ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
       rm -f $OPENRESTY_DOWNLOAD/Makefile
     fi
 
@@ -213,16 +216,22 @@ main() {
       popd
     fi
 
-    if [[ $OPENRESTY_PATCHES == 1 && ! -d $OPENRESTY_PATCHES_DOWNLOAD ]]; then
-      warn "Kong OpenResty patches not found, downloading..."
+    if [[ $OPENRESTY_PATCHES != 0 ]]; then
       pushd $DOWNLOAD_CACHE
-        curl -s -S -L https://github.com/Kong/openresty-patches/archive/master.tar.gz | tar xz
+        if [[ ! -d "openresty-patches" ]]; then
+          warn "Kong OpenResty patches not found, cloning..."
+          git clone https://github.com/Kong/openresty-patches
+        fi
+
+        pushd openresty-patches
+          notice "Checking out branch '$OPENRESTY_PATCHES' of Kong's OpenResty patches..."
+          git checkout -f -b $OPENRESTY_PATCHES origin/$OPENRESTY_PATCHES
+          git pull
+        popd
       popd
     fi
 
     warn "Building OpenResty..."
-
-    OPENRESTY_PATCHES_DOWNLOAD=`realpath $OPENRESTY_PATCHES_DOWNLOAD`
 
     pushd $OPENRESTY_DOWNLOAD
       if [ ! -f Makefile ]; then
@@ -247,10 +256,10 @@ main() {
             OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
         fi
 
-        if [ $OPENRESTY_PATCHES == 1 ]; then
+        if [ $OPENRESTY_PATCHES != 0 ]; then
           pushd bundle
             if [ ! -f .patch_applied ]; then
-              for patch_file in $(ls -1 $OPENRESTY_PATCHES_DOWNLOAD/patches/$OPENRESTY_VER/*.patch); do
+              for patch_file in $(ls -1 $(realpath $DOWNLOAD_CACHE/openresty-patches)/patches/$OPENRESTY_VER/*.patch); do
                 echo "Applying OpenResty patch $patch_file"
                 patch -p1 < $patch_file
               done
@@ -348,6 +357,7 @@ show_usage() {
   echo -e "                                \033[1;31mWARNING:\033[0m this removes everything inside the prefix directory"
   echo "      --no-openresty-patches    do not apply openresty-patches while compiling OpenResty, patching is"
   echo "                                enabled by default"
+  echo "      --openresty-patches <branch> specify an openresty-patches branch to use when applying patches"
   echo "      --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks"
   echo "                                will not be built"
   echo "      --add-module              path to additional NGINX module to be built, this option can be repeated"
