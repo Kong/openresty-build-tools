@@ -11,6 +11,7 @@ LUAROCKS_VER=
 BUILD_CACHE=1
 ARTIFACT_CACHE=1
 OPENRESTY_PATCHES=1
+RESTY_PCRE_VER=8.41
 DEBUG=0
 NPROC=`nproc`
 OS=
@@ -28,6 +29,14 @@ main() {
         ;;
       -j|--jobs)
         NPROC=$2
+        shift 2
+        ;;
+      --pcre)
+        RESTY_PCRE_VER=$2
+        shift 2
+        ;;
+      --pcre_sha)
+        PCRE_SHA=$2
         shift 2
         ;;
       --openresty)
@@ -219,6 +228,21 @@ main() {
         curl -s -S -L https://github.com/Kong/openresty-patches/archive/master.tar.gz | tar xz
       popd
     fi
+    
+    PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$RESTY_PCRE_VER
+    PCRE_LOCATION=`realpath $PCRE_DOWNLOAD`
+    if [ ! -z "$RESTY_PCRE_VER" ]; then
+      if [ ! -d $PCRE_DOWNLOAD ]; then
+        warn "PCRE source not found, downloading..."
+        pushd $DOWNLOAD_CACHE
+          curl -sSLO https://ftp.pcre.org/pub/pcre/pcre-${RESTY_PCRE_VERSION}.tar.gz
+          if [ ! -z ${PCRE_SHA+x} ]; then
+            echo "$PCRE_SHA pcre-${RESTY_PCRE_VERSION}.tar.gz" | sha256sum -c -
+          fi
+          tar -xzvf pcre-${RESTY_PCRE_VERSION}.tar.gz
+        popd
+      fi
+    fi
 
     warn "Building OpenResty..."
 
@@ -230,6 +254,7 @@ main() {
           "--prefix=$OPENRESTY_INSTALL"
           "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
           "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENSSL_INSTALL/lib'"
+          "--with-pcre=$PCRE_LOCATION"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
