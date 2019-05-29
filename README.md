@@ -8,7 +8,7 @@ is so you always ends up with the same binary, every time.
 
 # Synopsis
 ```
-./kong-ngx-build -p buildroot --openresty 1.13.6.2 --openssl 1.1.1b --luarocks 3.0.4 --pcre 8.41 --debug
+./kong-ngx-build -p buildroot --openresty 1.13.6.2 --openssl 1.1.1b --luarocks 3.0.4 --pcre 8.43 --debug
 ```
 
 # Usage
