@@ -167,8 +167,12 @@ main() {
     pushd $OPENSSL_DOWNLOAD
       if [[ ($OPENSSL_VER == 1.0.* && ! -d include/openssl) || ! -f Makefile ]]; then
           OPENSSL_OPTS=(
+            "-g"
             "shared"
+            "-DPURIFY"
+            "no-threads"
             "--prefix=$OPENSSL_INSTALL"
+            "--openssldir=$OPENSSL_INSTALL"
           )
 
           if [[ $OPENSSL_VER == 1.1.* ]]; then
