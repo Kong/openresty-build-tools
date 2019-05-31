@@ -229,8 +229,8 @@ main() {
 
         pushd openresty-patches
           notice "Checking out branch '$OPENRESTY_PATCHES' of Kong's OpenResty patches..."
-          git checkout -f -b $OPENRESTY_PATCHES origin/$OPENRESTY_PATCHES
-          git pull
+          git fetch
+          git reset --hard origin/$OPENRESTY_PATCHES
         popd
       popd
     fi
