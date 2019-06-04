@@ -156,7 +156,7 @@ main() {
   OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
   OPENRESTY_INSTALL=$PREFIX/openresty
 
-  if [ ! -d $OPENSSL_INSTALL ]; then
+  if [ ! -f $OPENSSL_INSTALL/bin/openssl ]; then
     if [ ! -d $OPENSSL_DOWNLOAD ]; then
       warn "OpenSSL source not found, downloading..."
       pushd $DOWNLOAD_CACHE
