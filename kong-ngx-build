@@ -153,7 +153,7 @@ main() {
 
   notice "Building the components now..."
 
-  OPENSSL_INSTALL=$PREFIX/openssl
+  OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
   OPENRESTY_INSTALL=$PREFIX/openresty
 
   if [ ! -d $OPENSSL_INSTALL ]; then
