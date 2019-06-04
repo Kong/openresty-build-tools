@@ -154,6 +154,7 @@ main() {
   notice "Building the components now..."
 
   OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
+  OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
   OPENRESTY_INSTALL=$PREFIX/openresty
 
   if [ ! -f $OPENSSL_INSTALL/bin/openssl ]; then
@@ -254,7 +255,7 @@ main() {
         OPENRESTY_OPTS=(
           "--prefix=$OPENRESTY_INSTALL"
           "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
-          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENSSL_INSTALL/lib'"
+          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
