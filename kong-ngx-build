@@ -314,9 +314,10 @@ main() {
 
 
   if [ ! -z "$LUAROCKS_VER" ]; then
-    LUAROCKS_INSTALL=$PREFIX/luarocks
-
-    if [ ! -d $LUAROCKS_INSTALL ]; then
+    LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
+    LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
+    
+    if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
       LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
 
       if [ ! -d $LUAROCKS_DOWNLOAD ]; then
@@ -342,7 +343,7 @@ main() {
         fi
 
         make build -j$NPROC
-        make install
+        make install DESTDIR=$LUAROCKS_DESTDIR
       popd
 
       succ "LuaRocks $LUAROCKS_VER has been built successfully!"
