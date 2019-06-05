@@ -8,7 +8,7 @@ is so you always ends up with the same binary, every time.
 
 # Synopsis
 ```
-./kong-ngx-build -p buildroot --openresty 1.13.6.2 --openssl 1.1.1b --luarocks 3.0.4 --debug
+./kong-ngx-build -p buildroot --openresty 1.13.6.2 --openssl 1.1.1b --luarocks 3.0.4 --pcre 8.43 --debug
 ```
 
 # Usage
@@ -16,7 +16,7 @@ is so you always ends up with the same binary, every time.
 $ ./kong-ngx-build -h
 Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong.
 
-Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver>
+Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver> --pcre <pcre_ver>
 
 Required arguments:
   -p, --prefix <prefix>            Location where components should be installed.

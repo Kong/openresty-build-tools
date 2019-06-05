@@ -8,6 +8,7 @@ DOWNLOAD_CACHE=work
 OPENRESTY_VER=
 OPENSSL_VER=
 LUAROCKS_VER=
+PCRE_VER=
 BUILD_CACHE=1
 ARTIFACT_CACHE=1
 OPENRESTY_PATCHES=master
@@ -28,6 +29,14 @@ main() {
         ;;
       -j|--jobs)
         NPROC=$2
+        shift 2
+        ;;
+      --pcre)
+        PCRE_VER=$2
+        shift 2
+        ;;
+      --pcre_sha)
+        PCRE_SHA=$2
         shift 2
         ;;
       --openresty)
@@ -234,6 +243,21 @@ main() {
         popd
       popd
     fi
+    
+    if [ ! -z "$PCRE_VER" ]; then
+      PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
+      PCRE_LOCATION=`realpath $PCRE_DOWNLOAD`
+      if [ ! -d $PCRE_DOWNLOAD ]; then
+        warn "PCRE source not found, downloading..."
+        pushd $DOWNLOAD_CACHE
+          curl -sSLO https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VER}.tar.gz
+          if [ ! -z ${PCRE_SHA+x} ]; then
+            echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
+          fi
+          tar -xzvf pcre-${PCRE_VER}.tar.gz
+        popd
+      fi
+    fi
 
     warn "Building OpenResty..."
 
@@ -252,12 +276,16 @@ main() {
           "--with-stream_realip_module"
           "-j$NPROC"
         )
+        
+        if [ ! -z "$PCRE_VER" ]; then
+          OPENRESTY_OPTS+=('--with-pcre=$PCRE_LOCATION')
+        fi
 
         OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
 
         if [ $DEBUG == 1 ]; then
-            OPENRESTY_OPTS+=('--with-debug')
-            OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
+          OPENRESTY_OPTS+=('--with-debug')
+          OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
         fi
 
         if [ $OPENRESTY_PATCHES != 0 ]; then
@@ -355,6 +383,7 @@ show_usage() {
   echo "      --openssl <openssl_ver>      Version of OpenSSL to build, such as 1.1.1c."
   echo ""
   echo "Optional arguments:"
+  echo "      --pcre                    version of PCRE to use to build, such as 8.43"
   echo "      --no-build-cache             Build from scratch."
   echo -e "                                   (\033[1;31mWARNING:\033[0m this removes everything inside the work directory)"
   echo ""
