@@ -155,7 +155,8 @@ main() {
 
   OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
   OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
-  OPENRESTY_INSTALL=$PREFIX/openresty
+  OPENRESTY_INSTALL=${OPENRESTY_INSTALL:-$PREFIX/openresty}
+  OPENRESTY_DESTDIR=${OPENRESTY_DESTDIR:-/}
 
   if [ ! -f $OPENSSL_INSTALL/bin/openssl ]; then
     if [ ! -d $OPENSSL_DOWNLOAD ]; then
@@ -242,6 +243,7 @@ main() {
             echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
           fi
           tar -xzvf pcre-${PCRE_VER}.tar.gz
+          ln -s pcre-$OPENSSL_VER pcre
         popd
       fi
     fi
@@ -305,7 +307,7 @@ main() {
       fi
 
       make -j$NPROC
-      make install
+      make -j$NPROC install DESTDIR=${OPENRESTY_DESTDIR}
     popd
 
     succ "OpenResty $OPENRESTY_VER has been built successfully!"
