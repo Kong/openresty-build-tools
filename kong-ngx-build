@@ -369,6 +369,7 @@ show_usage() {
   echo "      --openresty               version of OpenResty to build, such as 1.13.6.2"
   echo "      --openssl                 version of OpenSSL to build, such as 1.1.1b"
   echo "Optional arguments:"
+  echo "      --pcre                    version of PCRE to use to build, such as 8.43"
   echo "      --no-build-cache          disable compilation caching and re-download source code to"
   echo "                                build from scratch"
   echo -e "                                \033[1;31mWARNING:\033[0m this removes everything inside the work directory"
