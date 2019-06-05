@@ -204,7 +204,7 @@ main() {
     succ "OpenSSL $OPENSSL_VER has been built successfully (cached)!"
   fi
 
-  if [ ! -d $OPENRESTY_INSTALL ]; then
+  if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
     if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
       notice "Patched OpenResty found, removing..."
       rm -rf $OPENRESTY_DOWNLOAD
@@ -316,7 +316,6 @@ main() {
     succ "OpenResty $OPENRESTY_VER has been built successfully (cached)!"
   fi
 
-
   if [ ! -z "$LUAROCKS_VER" ]; then
     LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
     LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
@@ -342,12 +341,12 @@ main() {
           ./configure \
             --prefix=$LUAROCKS_INSTALL \
             --lua-suffix=jit \
-            --with-lua=$OPENRESTY_INSTALL/luajit \
-            --with-lua-include=$OPENRESTY_INSTALL/luajit/include/luajit-2.1
+            --with-lua=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit \
+            --with-lua-include=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit/include/luajit-2.1
         fi
 
         make build -j$NPROC
-        make install DESTDIR=$LUAROCKS_DESTDIR
+        make install DESTDIR=${LUAROCKS_DESTDIR}
       popd
 
       succ "LuaRocks $LUAROCKS_VER has been built successfully!"
