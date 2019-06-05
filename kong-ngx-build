@@ -234,7 +234,6 @@ main() {
     
     if [ ! -z "$PCRE_VER" ]; then
       PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
-      PCRE_LOCATION=`realpath $PCRE_DOWNLOAD`
       if [ ! -d $PCRE_DOWNLOAD ]; then
         warn "PCRE source not found, downloading..."
         pushd $DOWNLOAD_CACHE
@@ -269,7 +268,7 @@ main() {
         )
         
         if [ ! -z "$PCRE_VER" ]; then
-          OPENRESTY_OPTS+=('--with-pcre=$PCRE_LOCATION')
+          OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
         fi
 
         OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
