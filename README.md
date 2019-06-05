@@ -14,32 +14,45 @@ is so you always ends up with the same binary, every time.
 # Usage
 ```
 $ ./kong-ngx-build -h
-Build basic components (OpenResty, OpenSSL and LuaRocks for Kong)
+Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong.
 
 Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver> --pcre <pcre_ver>
 
 Required arguments:
-  -p, --prefix                  location where components should be installed to
-      --openresty               version of OpenResty to build, such as 1.13.6.2
-      --openssl                 version of OpenSSL to build, such as 1.1.1b
+  -p, --prefix <prefix>            Location where components should be installed.
+      --openresty <openresty_ver>  Version of OpenResty to build, such as 1.13.6.2.
+      --openssl <openssl_ver>      Version of OpenSSL to build, such as 1.1.1c.
+
 Optional arguments:
-      --no-build-cache          disable compilation caching and re-download source code to
-                                build from scratch
-                                WARNING: this removes everything inside the work directory
-      --no-artifact-cache       disable artifact caching and re-install all the softwares
-                                WARNING: this removes everything inside the prefix directory
-      --no-openresty-patches    do not apply openresty-patches while compiling OpenResty, patching is
-                                enabled by default
-      --luarocks                version of LuaRocks to build, such as 3.0.4. if absent LuaRocks
-                                will not be built
-      --add-module              path to additional NGINX module to be built, this option can be repeated
-                                and will be passed to NGINX's configure in the order they were specified
-      --debug                   disable compile time optimizations and memory pooling for NGINX,
-                                LuaJIT and OpenSSL to help debugging
-      -j, --jobs                concurrency level to use when building, defaults to number of CPU
-                                cores available (6)
-      --work                    the working directory to use while compiling, defaults to "work"
-  -h, --help                    show this usage
+      --no-build-cache             Build from scratch.
+                                   (WARNING: this removes everything inside the work directory)
+
+      --no-artifact-cache          Disable artifact caching and re-install all the softwares.
+                                   (WARNING: this removes everything inside the prefix directory)
+
+      --no-openresty-patches       Do not apply openresty-patches while compiling OpenResty.
+                                   (Patching is enabled by default)
+
+      --openresty-patches <branch> Specify an openresty-patches branch to use when applying patches.
+                                   (Defaults to "master")
+
+      --luarocks <luarocks_ver>    Version of LuaRocks to build, such as 3.1.2. If absent, LuaRocks
+                                   will not be built.
+
+      --add-module <module_path>   Path to additional NGINX module to be built. This option can be
+                                   repeated and will be passed to NGINX's configure in the order
+                                   they were specified.
+
+      --debug                      Disable compile-time optimizations and memory pooling for NGINX,
+                                   LuaJIT and OpenSSL to help debugging.
+
+  -j, --jobs                       Concurrency level to use when building.
+                                   (Defaults to number of CPU cores available: 8)
+
+      --work <work_dir>            The working directory to use while compiling.
+                                   (Defaults to "work")
+
+  -h, --help                       Show this message.
 ```
 
 # Caching
