@@ -157,11 +157,12 @@ main() {
   notice "Building the components now..."
 
   OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
+  OPENSSL_DESTDIR=${OPENSSL_DESTDIR:-/}
   OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
   OPENRESTY_INSTALL=${OPENRESTY_INSTALL:-$PREFIX/openresty}
   OPENRESTY_DESTDIR=${OPENRESTY_DESTDIR:-/}
 
-  if [ ! -f $OPENSSL_INSTALL/bin/openssl ]; then
+  if [ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl ]; then
     if [ ! -d $OPENSSL_DOWNLOAD ]; then
       warn "OpenSSL source not found, downloading..."
       pushd $DOWNLOAD_CACHE
@@ -198,11 +199,11 @@ main() {
             OPENSSL_OPTS+=('-d')
           fi
 
-        eval ./config ${OPENSSL_OPTS[*]}
+        eval ./config ${OPENSSL_OPTS[*]} "-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'"
       fi
 
       make -j$NPROC
-      make install_sw
+      make install_sw DESTDIR=${OPENSSL_DESTDIR}
     popd
 
     succ "OpenSSL $OPENSSL_VER has been built successfully!"
@@ -268,8 +269,8 @@ main() {
       if [ ! -f Makefile ]; then
         OPENRESTY_OPTS=(
           "--prefix=$OPENRESTY_INSTALL"
-          "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
-          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
+          "--with-cc-opt='-I$OPENSSL_DESTDIR$OPENSSL_INSTALL/include'"
+          "--with-ld-opt='-L$OPENSSL_DESTDIR$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
