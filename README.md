@@ -53,6 +53,23 @@ Optional arguments:
                                    (Defaults to "work")
 
   -h, --help                       Show this message.
+
+Optional ENV:
+
+The following ENV's are likely only utilized when building for the purposes of packaging Kong
+
+  LUAROCKS_INSTALL                 Overrides the `./config --prefix` value (default is `--prefix/luarocks`)
+  
+  LUAROCKS_DESTDIR                 Overrides the `make install DESTDIR` (default is `/`)
+  
+  OPENRESTY_INSTALL                Overrides the `./config --prefix` value (default is `--prefix/openresty)
+  
+  OPENRESTY_DESTDIR                Overrides the `make install DESTDIR` (default is `/`)
+  
+  OPENSSL_INSTALL                  Overrides the `./config --prefix` value (default is `--prefix/openssl)
+  
+  OPENRESTY_RPATH                  Overrides the `make install DESTDIR` (default is `/`)
+  
 ```
 
 # Caching
