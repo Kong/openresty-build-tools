@@ -58,7 +58,7 @@ Optional ENV:
 
 The following ENV's are likely only utilized when building for the purposes of packaging Kong
 
-  LUAROCKS_INSTALL                 Overrides the `./config --prefix` value (default is `--prefix/luarocks`)
+  LUAROCKS_INSTALL                 Overrides the `./config --prefix` value (default is `<prefix>/luarocks`)
   
   LUAROCKS_DESTDIR                 Overrides the `make install DESTDIR` (default is `/`)
   
