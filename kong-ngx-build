@@ -156,10 +156,13 @@ main() {
 
   notice "Building the components now..."
 
-  OPENSSL_INSTALL=$PREFIX/openssl
-  OPENRESTY_INSTALL=$PREFIX/openresty
+  OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
+  OPENSSL_DESTDIR=${OPENSSL_DESTDIR:-/}
+  OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
+  OPENRESTY_INSTALL=${OPENRESTY_INSTALL:-$PREFIX/openresty}
+  OPENRESTY_DESTDIR=${OPENRESTY_DESTDIR:-/}
 
-  if [ ! -d $OPENSSL_INSTALL ]; then
+  if [ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl ]; then
     if [ ! -d $OPENSSL_DOWNLOAD ]; then
       warn "OpenSSL source not found, downloading..."
       pushd $DOWNLOAD_CACHE
@@ -168,6 +171,7 @@ main() {
           echo "$OPENSSL_SHA openssl-$OPENSSL_VER.tar.gz" | sha256sum -c -
         fi
         tar -xzvf openssl-$OPENSSL_VER.tar.gz
+        ln -s openssl-$OPENSSL_VER openssl
       popd
     fi
 
@@ -195,11 +199,11 @@ main() {
             OPENSSL_OPTS+=('-d')
           fi
 
-        eval ./config ${OPENSSL_OPTS[*]}
+        eval ./config ${OPENSSL_OPTS[*]} "-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'"
       fi
 
       make -j$NPROC
-      make install_sw
+      make install_sw DESTDIR=${OPENSSL_DESTDIR}
     popd
 
     succ "OpenSSL $OPENSSL_VER has been built successfully!"
@@ -208,7 +212,7 @@ main() {
     succ "OpenSSL $OPENSSL_VER has been built successfully (cached)!"
   fi
 
-  if [ ! -d $OPENRESTY_INSTALL ]; then
+  if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
     if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
       notice "Patched OpenResty found, removing..."
       rm -rf $OPENRESTY_DOWNLOAD
@@ -246,7 +250,6 @@ main() {
     
     if [ ! -z "$PCRE_VER" ]; then
       PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
-      PCRE_LOCATION=`realpath $PCRE_DOWNLOAD`
       if [ ! -d $PCRE_DOWNLOAD ]; then
         warn "PCRE source not found, downloading..."
         pushd $DOWNLOAD_CACHE
@@ -255,6 +258,7 @@ main() {
             echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
           fi
           tar -xzvf pcre-${PCRE_VER}.tar.gz
+          ln -s pcre-$OPENSSL_VER pcre
         popd
       fi
     fi
@@ -265,8 +269,8 @@ main() {
       if [ ! -f Makefile ]; then
         OPENRESTY_OPTS=(
           "--prefix=$OPENRESTY_INSTALL"
-          "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
-          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENSSL_INSTALL/lib'"
+          "--with-cc-opt='-I$OPENSSL_DESTDIR$OPENSSL_INSTALL/include'"
+          "--with-ld-opt='-L$OPENSSL_DESTDIR$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
@@ -278,7 +282,7 @@ main() {
         )
         
         if [ ! -z "$PCRE_VER" ]; then
-          OPENRESTY_OPTS+=('--with-pcre=$PCRE_LOCATION')
+          OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
         fi
 
         OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
@@ -316,7 +320,7 @@ main() {
       fi
 
       make -j$NPROC
-      make install
+      make -j$NPROC install DESTDIR=${OPENRESTY_DESTDIR}
     popd
 
     succ "OpenResty $OPENRESTY_VER has been built successfully!"
@@ -325,11 +329,11 @@ main() {
     succ "OpenResty $OPENRESTY_VER has been built successfully (cached)!"
   fi
 
-
   if [ ! -z "$LUAROCKS_VER" ]; then
-    LUAROCKS_INSTALL=$PREFIX/luarocks
-
-    if [ ! -d $LUAROCKS_INSTALL ]; then
+    LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
+    LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
+    
+    if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
       LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
 
       if [ ! -d $LUAROCKS_DOWNLOAD ]; then
@@ -350,12 +354,12 @@ main() {
           ./configure \
             --prefix=$LUAROCKS_INSTALL \
             --lua-suffix=jit \
-            --with-lua=$OPENRESTY_INSTALL/luajit \
-            --with-lua-include=$OPENRESTY_INSTALL/luajit/include/luajit-2.1
+            --with-lua=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit \
+            --with-lua-include=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit/include/luajit-2.1
         fi
 
         make build -j$NPROC
-        make install
+        make install DESTDIR=${LUAROCKS_DESTDIR}
       popd
 
       succ "LuaRocks $LUAROCKS_VER has been built successfully!"
