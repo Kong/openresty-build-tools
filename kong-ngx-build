@@ -9,8 +9,7 @@ OPENRESTY_VER=
 OPENSSL_VER=
 LUAROCKS_VER=
 PCRE_VER=
-BUILD_CACHE=1
-ARTIFACT_CACHE=1
+FORCE=0
 OPENRESTY_PATCHES=master
 DEBUG=0
 NPROC=`nproc`
@@ -63,14 +62,6 @@ main() {
         LUAROCKS_SHA=$2
         shift 2
         ;;
-      --no-build-cache)
-        BUILD_CACHE=0
-        shift 1
-        ;;
-      --no-artifact-cache)
-        ARTIFACT_CACHE=0
-        shift 1
-        ;;
       --no-openresty-patches)
         OPENRESTY_PATCHES=0
         shift 1
@@ -78,6 +69,10 @@ main() {
       --openresty-patches)
         OPENRESTY_PATCHES=$2
         shift 2
+        ;;
+      -f|--force)
+        FORCE=1
+        shift 1
         ;;
       --debug)
         DEBUG=1
@@ -142,12 +137,8 @@ main() {
     OS_VER=$(lsb_release -sr)
   fi
 
-  if [ $BUILD_CACHE == 0 ]; then
-      rm -rf $DOWNLOAD_CACHE
-  fi
-
-  if [ $ARTIFACT_CACHE == 0 ]; then
-      rm -rf $PREFIX
+  if [ $FORCE == 1 ]; then
+    rm -rf $PREFIX $DOWNLOAD_CACHE
   fi
 
   OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL_VER
@@ -393,10 +384,6 @@ main() {
     fi
   fi
 
-  if [ $BUILD_CACHE == 0 ]; then
-      rm -rf $DOWNLOAD_CACHE
-  fi
-
   succ "Build finished in $SECONDS seconds. Enjoy!"
 }
 
@@ -411,12 +398,6 @@ show_usage() {
   echo "      --openssl <openssl_ver>      Version of OpenSSL to build, such as 1.1.1c."
   echo ""
   echo "Optional arguments:"
-  echo "      --no-build-cache             Build from scratch."
-  echo -e "                                   (\033[1;31mWARNING:\033[0m this removes everything inside the work directory)"
-  echo ""
-  echo "      --no-artifact-cache          Disable artifact caching and re-install all the softwares."
-  echo -e "                                   (\033[1;31mWARNING:\033[0m this removes everything inside the prefix directory)"
-  echo ""
   echo "      --no-openresty-patches       Do not apply openresty-patches while compiling OpenResty."
   echo "                                   (Patching is enabled by default)"
   echo ""
@@ -439,8 +420,11 @@ show_usage() {
   echo "  -j, --jobs                       Concurrency level to use when building."
   echo "                                   (Defaults to number of CPU cores available: $NPROC)"
   echo ""
-  echo "      --work <work_dir>            The working directory to use while compiling."
+  echo "      --work <work>                The working directory to use while compiling."
   echo "                                   (Defaults to \"work\")"
+  echo ""
+  echo "  -f, --force                      Build from scratch."
+  echo -e "                                   (\033[1;31mWARNING:\033[0m this removes everything inside the <work> and <prefix> directories)"
   echo ""
   echo "  -h, --help                       Show this message."
 }
