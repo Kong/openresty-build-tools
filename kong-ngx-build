@@ -298,12 +298,17 @@ main() {
             if [ ! -f .patch_applied ]; then
               for patch_file in $(ls -1 $DOWNLOAD_CACHE/openresty-patches/patches/$OPENRESTY_VER/*.patch); do
                 echo "Applying OpenResty patch $patch_file"
-                patch -p1 < $patch_file
+                patch -p1 < $patch_file \
+                  || fatal "failed to apply patch: $patch_file"
               done
 
               touch .patch_applied
             fi
           popd
+
+          if [[ ! -f "bundle/.patch_applied" ]]; then
+            fatal "missing .patch_applied file; some OpenResty patches may not have been applied"
+          fi
         fi
 
         # apply non Kong-specific patches
