@@ -155,27 +155,136 @@ main() {
 
   mkdir -p $DOWNLOAD_CACHE $PREFIX
 
-  notice "Building the components now..."
-
   OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
   OPENSSL_DESTDIR=${OPENSSL_DESTDIR:-/}
   OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
   OPENRESTY_INSTALL=${OPENRESTY_INSTALL:-$PREFIX/openresty}
   OPENRESTY_DESTDIR=${OPENRESTY_DESTDIR:-/}
 
-  if [ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl ]; then
-    if [ ! -d $OPENSSL_DOWNLOAD ]; then
+  notice "Downloading the components now..."
+
+  pushd $DOWNLOAD_CACHE
+    # OpenSSL
+
+    if [[ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl && ! -d $OPENSSL_DOWNLOAD ]]; then
       warn "OpenSSL source not found, downloading..."
-      pushd $DOWNLOAD_CACHE
-        curl -sSLO https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz
-        if [ ! -z ${OPENSSL_SHA+x} ]; then
-          echo "$OPENSSL_SHA openssl-$OPENSSL_VER.tar.gz" | sha256sum -c -
-        fi
-        tar -xzvf openssl-$OPENSSL_VER.tar.gz
-        ln -s openssl-$OPENSSL_VER openssl
-      popd
+      curl -sSLO https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz
+      if [ ! -z ${OPENSSL_SHA+x} ]; then
+        echo "$OPENSSL_SHA openssl-$OPENSSL_VER.tar.gz" | sha256sum -c -
+      fi
+      tar -xzvf openssl-$OPENSSL_VER.tar.gz
+      ln -s openssl-$OPENSSL_VER openssl
     fi
 
+    # OpenResty
+
+    if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
+      if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
+        warn "Patched OpenResty found but vanilla requested, removing source..."
+        rm -rf $OPENRESTY_DOWNLOAD
+
+      elif [[ $OPENRESTY_PATCHES != 0 && ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
+        warn "Vanilla OpenResty found but patches requested, removing Makefile..."
+        rm -f $OPENRESTY_DOWNLOAD/Makefile
+      fi
+
+      if [ ! -d $OPENRESTY_DOWNLOAD ]; then
+        warn "OpenResty source not found, downloading..."
+        curl -sSLO https://openresty.org/download/openresty-$OPENRESTY_VER.tar.gz
+        if [ ! -z ${OPENRESTY_SHA+x} ]; then
+          echo "$OPENRESTY_SHA openresty-$OPENRESTY_VER.tar.gz" | sha256sum -c -
+        fi
+        tar -xzvf openresty-$OPENRESTY_VER.tar.gz
+      fi
+    fi
+
+    # PCRE
+
+    if [ ! -z "$PCRE_VER" ]; then
+      PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
+      if [ ! -d $PCRE_DOWNLOAD ]; then
+        warn "PCRE source not found, downloading..."
+        curl -sSLO https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VER}.tar.gz
+        if [ ! -z ${PCRE_SHA+x} ]; then
+          echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
+        fi
+        tar -xzvf pcre-${PCRE_VER}.tar.gz
+        ln -s pcre-$OPENSSL_VER pcre
+      fi
+    fi
+
+    # LuaRocks
+
+    if [ ! -z "$LUAROCKS_VER" ]; then
+      LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
+      LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
+      if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
+        LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
+        if [ ! -d $LUAROCKS_DOWNLOAD ]; then
+          warn "LuaRocks source not found, downloading..."
+          curl -sSLO https://luarocks.org/releases/luarocks-$LUAROCKS_VER.tar.gz
+          if [ ! -z ${LUAROCKS_SHA+x} ]; then
+            echo "$LUAROCKS_SHA luarocks-$LUAROCKS_VER.tar.gz" | sha256sum -c -
+          fi
+          tar -xzvf luarocks-$LUAROCKS_VER.tar.gz
+        fi
+      fi
+    fi
+  popd
+
+  notice "Patching the components now..."
+
+  if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
+    notice "Patching OpenResty..."
+
+    if [[ $OPENRESTY_PATCHES != 0 ]]; then
+      pushd $DOWNLOAD_CACHE
+        if [[ ! -d "openresty-patches" ]]; then
+          warn "Kong OpenResty patches not found, cloning..."
+          git clone https://github.com/Kong/openresty-patches
+        fi
+
+        pushd openresty-patches
+          notice "Checking out branch '$OPENRESTY_PATCHES' of Kong's OpenResty patches..."
+          git fetch
+          git reset --hard origin/$OPENRESTY_PATCHES
+        popd
+      popd
+
+      pushd $OPENRESTY_DOWNLOAD/bundle
+        if [ ! -f .patch_applied ]; then
+          for patch_file in $(ls -1 $DOWNLOAD_CACHE/openresty-patches/patches/$OPENRESTY_VER/*.patch); do
+            notice "Applying OpenResty patch $patch_file"
+            patch -p1 < $patch_file \
+              || fatal "failed to apply patch: $patch_file"
+          done
+
+          touch .patch_applied
+        fi
+      popd
+
+      if [ ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]; then
+        fatal "missing .patch_applied file; some OpenResty patches may not have been applied"
+      fi
+    fi
+
+    # apply non Kong-specific patches
+
+    if [[ $OPENRESTY_VER == 1.13.6.* ]]; then
+      if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
+        warn "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
+        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-1.13.6
+          patch --forward -p1 < $SCRIPT_PATH/patches/nginx-1.13.6-rm_glibc_crypt_r_workaround.patch || true
+        popd
+      fi
+    fi
+  fi
+
+  notice "Building the components now..."
+
+  # Building OpenSSL
+
+  if [ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl ]; then
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
@@ -213,58 +322,10 @@ main() {
     succ "OpenSSL $OPENSSL_VER has been built successfully (cached)!"
   fi
 
+  # Building OpenResty
+
   if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
-    if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
-      notice "Patched OpenResty found, removing..."
-      rm -rf $OPENRESTY_DOWNLOAD
-
-    elif [[ $OPENRESTY_PATCHES != 0 && ! -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
-      rm -f $OPENRESTY_DOWNLOAD/Makefile
-    fi
-
-
-    if [ ! -d $OPENRESTY_DOWNLOAD ]; then
-      warn "OpenResty source not found, downloading..."
-      pushd $DOWNLOAD_CACHE
-        curl -sSLO https://openresty.org/download/openresty-$OPENRESTY_VER.tar.gz
-        if [ ! -z ${OPENRESTY_SHA+x} ]; then
-          echo "$OPENRESTY_SHA openresty-$OPENRESTY_VER.tar.gz" | sha256sum -c -
-        fi
-        tar -xzvf openresty-$OPENRESTY_VER.tar.gz
-      popd
-    fi
-
-    if [[ $OPENRESTY_PATCHES != 0 ]]; then
-      pushd $DOWNLOAD_CACHE
-        if [[ ! -d "openresty-patches" ]]; then
-          warn "Kong OpenResty patches not found, cloning..."
-          git clone https://github.com/Kong/openresty-patches
-        fi
-
-        pushd openresty-patches
-          notice "Checking out branch '$OPENRESTY_PATCHES' of Kong's OpenResty patches..."
-          git fetch
-          git reset --hard origin/$OPENRESTY_PATCHES
-        popd
-      popd
-    fi
-
-    if [ ! -z "$PCRE_VER" ]; then
-      PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
-      if [ ! -d $PCRE_DOWNLOAD ]; then
-        warn "PCRE source not found, downloading..."
-        pushd $DOWNLOAD_CACHE
-          curl -sSLO https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VER}.tar.gz
-          if [ ! -z ${PCRE_SHA+x} ]; then
-            echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
-          fi
-          tar -xzvf pcre-${PCRE_VER}.tar.gz
-          ln -s pcre-$OPENSSL_VER pcre
-        popd
-      fi
-    fi
-
-    warn "Building OpenResty..."
+    notice "Building OpenResty..."
 
     pushd $OPENRESTY_DOWNLOAD
       if [ ! -f Makefile ]; then
@@ -293,35 +354,6 @@ main() {
           OPENRESTY_OPTS+=('--with-luajit-xcflags="-DLUAJIT_USE_VALGRIND -DLUA_USE_ASSERT -DLUA_USE_APICHECK -DLUAJIT_USE_SYSMALLOC"')
         fi
 
-        if [ $OPENRESTY_PATCHES != 0 ]; then
-          pushd bundle
-            if [ ! -f .patch_applied ]; then
-              for patch_file in $(ls -1 $DOWNLOAD_CACHE/openresty-patches/patches/$OPENRESTY_VER/*.patch); do
-                echo "Applying OpenResty patch $patch_file"
-                patch -p1 < $patch_file \
-                  || fatal "failed to apply patch: $patch_file"
-              done
-
-              touch .patch_applied
-            fi
-          popd
-
-          if [ ! -f bundle/.patch_applied ]; then
-            fatal "missing .patch_applied file; some OpenResty patches may not have been applied"
-          fi
-        fi
-
-        # apply non Kong-specific patches
-
-        if [[ $OPENRESTY_VER == 1.13.6.* ]]; then
-          if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
-            notice "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
-            pushd bundle/nginx-1.13.6
-              patch --forward -p1 < $SCRIPT_PATH/patches/nginx-1.13.6-rm_glibc_crypt_r_workaround.patch || true
-            popd
-          fi
-        fi
-
         eval ./configure ${OPENRESTY_OPTS[*]}
       fi
 
@@ -335,25 +367,11 @@ main() {
     succ "OpenResty $OPENRESTY_VER has been built successfully (cached)!"
   fi
 
+  # Building LuaRocks
+
   if [ ! -z "$LUAROCKS_VER" ]; then
-    LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
-    LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
-
     if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
-      LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
-
-      if [ ! -d $LUAROCKS_DOWNLOAD ]; then
-        warn "LuaRocks source not found, downloading..."
-        pushd $DOWNLOAD_CACHE
-          curl -sSLO https://luarocks.org/releases/luarocks-$LUAROCKS_VER.tar.gz
-          if [ ! -z ${LUAROCKS_SHA+x} ]; then
-            echo "$LUAROCKS_SHA luarocks-$LUAROCKS_VER.tar.gz" | sha256sum -c -
-          fi
-          tar -xzvf luarocks-$LUAROCKS_VER.tar.gz
-        popd
-      fi
-
-      warn "Building LuaRocks..."
+      notice "Building LuaRocks..."
 
       pushd $LUAROCKS_DOWNLOAD
         if [ ! -f config.unix ]; then
