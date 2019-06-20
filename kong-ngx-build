@@ -248,7 +248,7 @@ main() {
         popd
       popd
     fi
-    
+
     if [ ! -z "$PCRE_VER" ]; then
       PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE_VER
       if [ ! -d $PCRE_DOWNLOAD ]; then
@@ -281,7 +281,7 @@ main() {
           "--with-stream_realip_module"
           "-j$NPROC"
         )
-        
+
         if [ ! -z "$PCRE_VER" ]; then
           OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
         fi
@@ -306,7 +306,7 @@ main() {
             fi
           popd
 
-          if [[ ! -f "bundle/.patch_applied" ]]; then
+          if [ ! -f bundle/.patch_applied ]; then
             fatal "missing .patch_applied file; some OpenResty patches may not have been applied"
           fi
         fi
@@ -338,7 +338,7 @@ main() {
   if [ ! -z "$LUAROCKS_VER" ]; then
     LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
     LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
-    
+
     if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
       LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
 
