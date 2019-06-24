@@ -261,7 +261,7 @@ main() {
 
     # apply non Kong-specific patches
 
-    if [[ $OPENRESTY_VER == 1.13.6.* ]]; then
+    if version_eq $OPENRESTY_VER 1.13.6; then
       if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
         warn "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
         pushd $OPENRESTY_DOWNLOAD/bundle/nginx-1.13.6
@@ -279,7 +279,7 @@ main() {
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
-      if [[ ($OPENSSL_VER == 1.0.* && ! -d include/openssl) || ! -f Makefile ]]; then
+      if (version_eq $OPENSSL_VER 1.0 && [[ ! -d include/openssl ]]) || [[ ! -f Makefile ]]; then
           OPENSSL_OPTS=(
             "-g"
             "shared"
@@ -289,7 +289,7 @@ main() {
             "--openssldir=$OPENSSL_INSTALL"
           )
 
-          if [[ $OPENSSL_VER == 1.1.* ]]; then
+          if version_eq $OPENSSL_VER 1.1; then
             OPENSSL_OPTS+=('no-unit-test')
 
           else
@@ -385,6 +385,48 @@ main() {
   fi
 
   succ "Build finished in $SECONDS seconds. Enjoy!"
+}
+
+parse_version() {
+    # in foo-x.y.z-foobar captures x y z
+    local re='[^0-9]*([0-9a-zA-Z]*)(?:[.]([0-9a-zA-Z]*))?(?:[.]([0-9a-zA-Z]*))?.*'
+    eval $2=`echo $1 | perl -0777 -pe "s/$re/\1/s"`
+    eval $3=`echo $1 | perl -0777 -pe "s/$re/\2/s"`
+    eval $4=`echo $1 | perl -0777 -pe "s/$re/\3/s"`
+}
+
+version_eq() {
+    parse_version $1 major_a minor_a revision_a
+    parse_version $2 major_b minor_b revision_b
+
+    [[ $major_a    = $major_b    ]] &&
+    [[ $minor_a    = $minor_b    ]] &&
+    # Note how 1.1.1 == 1.1 (comparisons again major.minor)
+    [[ -z $revision_b || $revision_a = $revision_b ]] && return 0
+
+    return 1
+}
+
+version_lt() {
+    parse_version $1 major_a minor_a revision_a
+    parse_version $2 major_b minor_b revision_b
+
+    [[ $major_a < $major_b ]] && return 0
+
+    [[ $major_a = $major_b ]] &&
+    [[ $minor_a < $minor_b ]] && return 0
+
+    [[ $major_a    = $major_b    ]] &&
+    [[ $minor_a    = $minor_b    ]] &&
+    [[ $revision_a < $revision_b ]] && return 0
+
+    return 1
+}
+
+version_gt() {
+    version_eq $1 $2 && return 1
+    version_lt $1 $2 && return 1
+    return 0
 }
 
 show_usage() {
