@@ -404,6 +404,16 @@ parse_version() {
   IFS='.' read -r -a $2 <<< "$version"
 }
 
+parse_nginx_core_version() {
+  [[ -z $1 ]] && fatal 'missing arg $1 when invoking parse_nginx_core_version()'
+
+  local nginx_ver
+
+  parse_version $1 nginx_ver
+
+  echo "${nginx_ver[0]}.${nginx_ver[1]}.${nginx_ver[2]}"
+}
+
 version_eq() {
   local version_a version_b
 
