@@ -305,7 +305,12 @@ main() {
         eval ./config ${OPENSSL_OPTS[*]} "-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'"
       fi
 
-      make -j$NPROC
+      if version_gte $OPENSSL_VER 1.1.0; then
+        make -j$NPROC
+      else
+        make
+      fi
+
       make install_sw DESTDIR=${OPENSSL_DESTDIR}
     popd
 
