@@ -141,6 +141,8 @@ main() {
     rm -rf $PREFIX $DOWNLOAD_CACHE
   fi
 
+  NGINX_CORE_VER=$(parse_nginx_core_version $OPENRESTY_VER)
+
   OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL_VER
   OPENRESTY_DOWNLOAD=$DOWNLOAD_CACHE/openresty-$OPENRESTY_VER
 
@@ -261,11 +263,11 @@ main() {
 
     # apply non Kong-specific patches
 
-    if version_eq $OPENRESTY_VER 1.13.6; then
+    if version_lt $NGINX_CORE_VER 1.15.0; then # this is fixed in Nginx 1.15.0
       if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
         warn "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
-        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-1.13.6
-          patch --forward -p1 < $SCRIPT_PATH/patches/nginx-1.13.6-rm_glibc_crypt_r_workaround.patch || true
+        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
+          patch --forward -p1 < $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-rm_glibc_crypt_r_workaround.patch || true
         popd
       fi
     fi
