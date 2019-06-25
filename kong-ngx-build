@@ -261,7 +261,7 @@ main() {
 
     # apply non Kong-specific patches
 
-    if [[ $OPENRESTY_VER == 1.13.6.* ]]; then
+    if version_eq $OPENRESTY_VER 1.13.6; then
       if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
         warn "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
         pushd $OPENRESTY_DOWNLOAD/bundle/nginx-1.13.6
@@ -279,7 +279,7 @@ main() {
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
-      if [[ ($OPENSSL_VER == 1.0.* && ! -d include/openssl) || ! -f Makefile ]]; then
+      if (version_lte $OPENSSL_VER 1.0 && [[ ! -d include/openssl ]]) || [[ ! -f Makefile ]]; then
           OPENSSL_OPTS=(
             "-g"
             "shared"
@@ -289,7 +289,7 @@ main() {
             "--openssldir=$OPENSSL_INSTALL"
           )
 
-          if [[ $OPENSSL_VER == 1.1.* ]]; then
+          if version_gte $OPENSSL_VER 1.1.0; then
             OPENSSL_OPTS+=('no-unit-test')
 
           else
@@ -329,10 +329,16 @@ main() {
           "--with-http_realip_module"
           "--with-http_stub_status_module"
           "--with-http_v2_module"
-          "--with-stream_ssl_preread_module"
-          "--with-stream_realip_module"
           "-j$NPROC"
         )
+
+        if version_gte $OPENRESTY_VER 1.11.4; then
+          OPENRESTY_OPTS+=('--with-stream_realip_module')
+        fi
+
+        if version_gte $OPENRESTY_VER 1.11.5; then
+          OPENRESTY_OPTS+=('--with-stream_ssl_preread_module')
+        fi
 
         if [ ! -z "$PCRE_VER" ]; then
           OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
