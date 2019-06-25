@@ -16,9 +16,13 @@ compiler:
 
 jobs:
   include:
-    # Known builds we want to succeed
-    - script: ./kong-ngx-build --prefix prefix --openresty 1.11.2.5 --openssl 1.0.2n --luarocks 2.4.3 --no-openresty-patches
-    - script: ./kong-ngx-build --prefix prefix --openresty 1.13.6.2 --openssl 1.1.1c --luarocks 3.1.3
+    - stage: test
+      script: bash t/*.sh
+
+    - stage: integration
+      # Known builds we want to succeed
+      script: ./kong-ngx-build --prefix prefix --openresty 1.11.2.5 --openssl 1.0.2n --luarocks 2.4.3 --no-openresty-patches
+      script: ./kong-ngx-build --prefix prefix --openresty 1.13.6.2 --openssl 1.1.1c --luarocks 3.1.3
 
 cache:
   apt: true
