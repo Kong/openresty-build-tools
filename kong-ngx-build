@@ -531,6 +531,8 @@ err() {
   exit 1
 }
 
-main $@
+if [[ $(basename $(realpath $0)) == "kong-ngx-build" ]]; then
+  main $@
+fi
 
 # vi: ts=2 sts=2 sw=2 et
