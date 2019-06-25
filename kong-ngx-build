@@ -387,6 +387,71 @@ main() {
   succ "Build finished in $SECONDS seconds. Enjoy!"
 }
 
+parse_version() {
+  [[ -z $1 ]] && fatal 'missing arg $1 when invoking parse_version()'
+  [[ -z $2 ]] && fatal 'missing arg $2 when invoking parse_version()'
+
+  # remove non-version parts of a version, ie foobar-1.2.3a.5-rc1 -> 1.2.3a.5
+  local re='^[^0-9]*([0-9a-zA-Z.]*)$'
+  local version=$(echo $1 | perl -0777 -pe "s/$re/\1/s")
+
+  IFS='.' read -r -a $2 <<< "$version"
+}
+
+version_eq() {
+  local version_a version_b
+
+  parse_version $1 version_a
+  parse_version $2 version_b
+
+  # Note that we are indexing on the b components, ie: 1.11.100 == 1.11
+  for index in "${!version_b[@]}"; do
+    [[ "${version_a[index]}" != "${version_b[index]}" ]] && return 1
+  done
+
+  return 0
+}
+
+version_lt() {
+  local version_a version_b
+
+  parse_version $1 version_a
+  parse_version $2 version_b
+
+  local alpha_num_re='^([0-9]+)([a-zA-Z]*)$'
+  local num_a num_b
+  local alp_a alp_b
+
+  for index in "${!version_a[@]}"; do
+    num_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
+    num_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
+    [[ "$num_a" -lt "$num_b" ]] && return 0
+    [[ "$num_a" -gt "$num_b" ]] && return 1
+
+    alp_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
+    alp_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
+    [[ "$alp_a" < "$alp_b" ]] && return 0
+    [[ "$alp_a" > "$alp_b" ]] && return 1
+  done
+
+  return 1
+}
+
+version_gt() {
+  (version_eq $1 $2 || version_lt $1 $2) && return 1
+  return 0
+}
+
+version_lte() {
+  (version_lt $1 $2 || version_eq $1 $2) && return 0
+  return 1
+}
+
+version_gte() {
+  (version_gt $1 $2 || version_eq $1 $2) && return 0
+  return 1
+}
+
 show_usage() {
   echo "Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong."
   echo ""
@@ -461,6 +526,8 @@ err() {
   exit 1
 }
 
-main $@
+if [[ $(basename $(realpath $0)) == "kong-ngx-build" ]]; then
+  main $@
+fi
 
 # vi: ts=2 sts=2 sw=2 et
