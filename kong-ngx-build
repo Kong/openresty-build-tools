@@ -449,6 +449,16 @@ version_gt() {
   return 0
 }
 
+version_lte() {
+  (version_lt $1 $2 || version_eq $1 $2) && return 0
+  return 1
+}
+
+version_gte() {
+  (version_gt $1 $2 || version_eq $1 $2) && return 0
+  return 1
+}
+
 show_usage() {
   echo "Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong."
   echo ""
