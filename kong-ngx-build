@@ -279,7 +279,7 @@ main() {
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
-      if (version_eq $OPENSSL_VER 1.0 && [[ ! -d include/openssl ]]) || [[ ! -f Makefile ]]; then
+      if (version_lt $OPENSSL_VER 1.1.0 && [[ ! -d include/openssl ]]) || [[ ! -f Makefile ]]; then
           OPENSSL_OPTS=(
             "-g"
             "shared"
@@ -289,7 +289,7 @@ main() {
             "--openssldir=$OPENSSL_INSTALL"
           )
 
-          if version_eq $OPENSSL_VER 1.1; then
+          if version_gte $OPENSSL_VER 1.1.0; then
             OPENSSL_OPTS+=('no-unit-test')
 
           else
@@ -332,13 +332,11 @@ main() {
           "-j$NPROC"
         )
 
-        if version_gt $OPENRESTY_VER 1.11.3; then
-          # 1.11.4
+        if version_gte $OPENRESTY_VER 1.11.4; then
           OPENRESTY_OPTS+=('--with-stream_realip_module')
         fi
 
-        if version_gt $OPENRESTY_VER 1.11.4; then
-          # 1.11.5
+        if version_gte $OPENRESTY_VER 1.11.5; then
           OPENRESTY_OPTS+=('--with-stream_ssl_preread_module')
         fi
 
