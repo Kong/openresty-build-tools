@@ -396,45 +396,57 @@ main() {
 }
 
 parse_version() {
-    # in foo-x.y.z-foobar captures x y z
-    local re='[^0-9]*([0-9a-zA-Z]*)(?:[.]([0-9a-zA-Z]*))?(?:[.]([0-9a-zA-Z]*))?.*'
-    eval $2=`echo $1 | perl -0777 -pe "s/$re/\1/s"`
-    eval $3=`echo $1 | perl -0777 -pe "s/$re/\2/s"`
-    eval $4=`echo $1 | perl -0777 -pe "s/$re/\3/s"`
+  [[ -z $1 || -z $2 ]] && return 1
+
+  # remove non-version parts of a version, ie foobar-1.2.3a.5-rc1 -> 1.2.3a.5
+  local re='^[^0-9]*([0-9a-zA-Z.]*).*$'
+  local version=$(echo $1 | perl -0777 -pe "s/$re/\1/s")
+
+  IFS='.' read -r -a $2 <<< "$version"
 }
 
 version_eq() {
-    parse_version $1 major_a minor_a revision_a
-    parse_version $2 major_b minor_b revision_b
+  local version_a version_b
 
-    [[ $major_a    = $major_b    ]] &&
-    [[ $minor_a    = $minor_b    ]] &&
-    # Note how 1.1.1 == 1.1 (comparisons again major.minor)
-    [[ -z $revision_b || $revision_a = $revision_b ]] && return 0
+  parse_version $1 version_a
+  parse_version $2 version_b
 
-    return 1
+  # Note that we are indexing on the b components, ie: 1.11.100 == 1.11
+  for index in "${!version_b[@]}"; do
+    [[ "${version_a[index]}" != "${version_b[index]}" ]] && return 1
+  done
+
+  return 0
 }
 
 version_lt() {
-    parse_version $1 major_a minor_a revision_a
-    parse_version $2 major_b minor_b revision_b
+  local version_a version_b
 
-    [[ $major_a < $major_b ]] && return 0
+  parse_version $1 version_a
+  parse_version $2 version_b
 
-    [[ $major_a = $major_b ]] &&
-    [[ $minor_a < $minor_b ]] && return 0
+  local alpha_num_re='^([0-9]+)([a-zA-Z]*)$'
+  local num_a num_b
+  local alp_a alp_b
 
-    [[ $major_a    = $major_b    ]] &&
-    [[ $minor_a    = $minor_b    ]] &&
-    [[ $revision_a < $revision_b ]] && return 0
+  for index in "${!version_a[@]}"; do
+    num_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
+    num_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
+    [[ "$num_a" -lt "$num_b" ]] && return 0
+    [[ "$num_a" -gt "$num_b" ]] && return 1
 
-    return 1
+    alp_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
+    alp_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
+    [[ "$alp_a" < "$alp_b" ]] && return 0
+    [[ "$alp_a" > "$alp_b" ]] && return 1
+  done
+
+  return 1
 }
 
 version_gt() {
-    version_eq $1 $2 && return 1
-    version_lt $1 $2 && return 1
-    return 0
+  (version_eq $1 $2 || version_lt $1 $2) && return 1
+  return 0
 }
 
 show_usage() {
