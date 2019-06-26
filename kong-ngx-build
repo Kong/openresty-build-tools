@@ -298,11 +298,15 @@ main() {
             OPENSSL_OPTS+=('no-tests')
           fi
 
+          if ([[ $CC == "clang" ]] && version_gte $OPENSSL_VER 1.1) || [[ $CC != "clang" ]]; then
+            OPENSSL_OPTS+=("-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'")
+          fi
+
           if [ $DEBUG == 1 ]; then
             OPENSSL_OPTS+=('-d')
           fi
 
-        eval ./config ${OPENSSL_OPTS[*]} "-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'"
+        eval ./config ${OPENSSL_OPTS[*]}
       fi
 
       if version_gte $OPENSSL_VER 1.1.0; then
