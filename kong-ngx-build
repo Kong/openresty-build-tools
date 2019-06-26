@@ -166,7 +166,6 @@ main() {
         echo "$OPENSSL_SHA openssl-$OPENSSL_VER.tar.gz" | sha256sum -c -
       fi
       tar -xzvf openssl-$OPENSSL_VER.tar.gz
-      ln -s openssl-$OPENSSL_VER openssl
     fi
 
     # OpenResty
@@ -202,7 +201,6 @@ main() {
           echo "$PCRE_SHA pcre-${PCRE_VER}.tar.gz" | sha256sum -c -
         fi
         tar -xzvf pcre-${PCRE_VER}.tar.gz
-        ln -s pcre-$OPENSSL_VER pcre
       fi
     fi
 
