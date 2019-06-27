@@ -349,6 +349,7 @@ main() {
       fi
 
       make -j$NPROC
+      make -j$NPROC install
       make -j$NPROC install DESTDIR=${OPENRESTY_DESTDIR}
     popd
 
@@ -357,6 +358,7 @@ main() {
   else
     succ "OpenResty $OPENRESTY_VER has been built successfully (cached)!"
   fi
+  
 
   # Building LuaRocks
 
@@ -368,9 +370,8 @@ main() {
         if [ ! -f config.unix ]; then
           ./configure \
             --prefix=$LUAROCKS_INSTALL \
-            --lua-suffix=jit \
-            --with-lua=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit \
-            --with-lua-include=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit/include/luajit-2.1
+            --with-lua=$OPENRESTY_INSTALL/luajit \
+            --with-lua-include=$OPENRESTY_INSTALL/luajit/include/luajit-2.1
         fi
 
         make build -j$NPROC
