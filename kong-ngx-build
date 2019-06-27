@@ -148,18 +148,21 @@ main() {
 
   mkdir -p $DOWNLOAD_CACHE $PREFIX
 
-  OPENSSL_INSTALL=${OPENSSL_INSTALL:-$PREFIX/openssl}
   OPENSSL_DESTDIR=${OPENSSL_DESTDIR:-/}
-  OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
-  OPENRESTY_INSTALL=${OPENRESTY_INSTALL:-$PREFIX/openresty}
   OPENRESTY_DESTDIR=${OPENRESTY_DESTDIR:-/}
+
+  OPENSSL_PREFIX=${OPENSSL_PREFIX:-$PREFIX/openssl}
+  OPENRESTY_PREFIX=${OPENRESTY_PREFIX:-$PREFIX/openresty}
+
+  OPENSSL_INSTALL=$(realpath -m $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
+  OPENRESTY_INSTALL=$(realpath -m $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
 
   notice "Downloading the components now..."
 
   pushd $DOWNLOAD_CACHE
     # OpenSSL
 
-    if [[ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl && ! -d $OPENSSL_DOWNLOAD ]]; then
+    if [[ ! -f $OPENSSL_INSTALL/bin/openssl && ! -d $OPENSSL_DOWNLOAD ]]; then
       warn "OpenSSL source not found, downloading..."
       curl -sSLO https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz
       if [ ! -z ${OPENSSL_SHA+x} ]; then
@@ -170,7 +173,7 @@ main() {
 
     # OpenResty
 
-    if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
+    if [ ! -f $OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
       if [[ $OPENRESTY_PATCHES == 0 && -f $OPENRESTY_DOWNLOAD/bundle/.patch_applied ]]; then
         warn "Patched OpenResty found but vanilla requested, removing source..."
         rm -rf $OPENRESTY_DOWNLOAD
@@ -207,9 +210,10 @@ main() {
     # LuaRocks
 
     if [ ! -z "$LUAROCKS_VER" ]; then
-      LUAROCKS_INSTALL=${LUAROCKS_INSTALL:-$PREFIX/luarocks}
       LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
-      if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
+      LUAROCKS_PREFIX=${LUAROCKS_PREFIX:-$PREFIX/luarocks}
+      LUAROCKS_INSTALL=$(realpath -m $LUAROCKS_DESTDIR/$LUAROCKS_PREFIX)
+      if [ ! -f $LUAROCKS_INSTALL/bin/luarocks ]; then
         LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
         if [ ! -d $LUAROCKS_DOWNLOAD ]; then
           warn "LuaRocks source not found, downloading..."
@@ -225,7 +229,7 @@ main() {
 
   notice "Patching the components now..."
 
-  if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
+  if [ ! -f $OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
     notice "Patching OpenResty..."
 
     if [[ $OPENRESTY_PATCHES != 0 ]]; then
@@ -275,7 +279,7 @@ main() {
 
   # Building OpenSSL
 
-  if [ ! -f $OPENSSL_DESTDIR$OPENSSL_INSTALL/bin/openssl ]; then
+  if [ ! -f $OPENSSL_INSTALL/bin/openssl ]; then
     notice "Building OpenSSL..."
 
     pushd $OPENSSL_DOWNLOAD
@@ -285,8 +289,8 @@ main() {
             "shared"
             "-DPURIFY"
             "no-threads"
-            "--prefix=$OPENSSL_INSTALL"
-            "--openssldir=$OPENSSL_INSTALL"
+            "--prefix=$OPENSSL_PREFIX"
+            "--openssldir=$OPENSSL_PREFIX"
           )
 
           if version_gte $OPENSSL_VER 1.1.0; then
@@ -324,15 +328,16 @@ main() {
 
   # Building OpenResty
 
-  if [ ! -f $OPENRESTY_DESTDIR$OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
+  if [ ! -f $OPENRESTY_INSTALL/nginx/sbin/nginx ]; then
     notice "Building OpenResty..."
 
     pushd $OPENRESTY_DOWNLOAD
       if [ ! -f Makefile ]; then
+        OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
         OPENRESTY_OPTS=(
-          "--prefix=$OPENRESTY_INSTALL"
-          "--with-cc-opt='-I$OPENSSL_DESTDIR$OPENSSL_INSTALL/include'"
-          "--with-ld-opt='-L$OPENSSL_DESTDIR$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
+          "--prefix=$OPENRESTY_PREFIX"
+          "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
+          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
@@ -376,16 +381,16 @@ main() {
   # Building LuaRocks
 
   if [ ! -z "$LUAROCKS_VER" ]; then
-    if [ ! -f $LUAROCKS_DESTDIR$LUAROCKS_INSTALL/bin/luarocks ]; then
+    if [ ! -f $LUAROCKS_INSTALL/bin/luarocks ]; then
       notice "Building LuaRocks..."
 
       pushd $LUAROCKS_DOWNLOAD
         if [ ! -f config.unix ]; then
           ./configure \
-            --prefix=$LUAROCKS_INSTALL \
+            --prefix=$LUAROCKS_PREFIX \
             --lua-suffix=jit \
-            --with-lua=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit \
-            --with-lua-include=$OPENRESTY_DESTDIR$OPENRESTY_INSTALL/luajit/include/luajit-2.1
+            --with-lua=$OPENRESTY_INSTALL/luajit \
+            --with-lua-include=$OPENRESTY_INSTALL/luajit/include/luajit-2.1
         fi
 
         make build -j$NPROC
