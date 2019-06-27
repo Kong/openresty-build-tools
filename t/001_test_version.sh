@@ -40,6 +40,12 @@ t "version_eq 1.11.12a 1.11" 0
 t "version_eq a.b.c a.b.c" 0
 t "version_eq a.b.c.d a.b.c" 0
 
+t "version_eq 1.2.3a.5-rc1 1.2.3a.5" 0
+t "version_eq 1.2.3a.5 1.2.3a.5-rc1" 1
+t "version_eq 1.2.3a.5 foobar-1.2.3a.5-rc1" 1
+t "version_eq 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 1
+t "version_eq 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 0
+
 
 t "version_lt 1.11.10 1.11.11" 0
 t "version_lt 1.10.11 1.11.11" 0
@@ -53,6 +59,10 @@ t "version_lt 2.12.0 1.11.0" 1
 t "version_lt 1.11.10a 1.11.11b" 0
 t "version_lt 1.11.10a 1.11.11bc" 0
 t "version_lt 1.11.10ab 1.11.11bc" 0
+
+t "version_lt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 0
+t "version_lt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 1
+t "version_lt 1.2.3a.5-rc2 foobar-1.2.3a.5-rc1" 1
 
 
 t "version_gt 1.12.0 1.11.0" 0
@@ -71,12 +81,26 @@ t "version_gt 1.11.10z 1.11.10b" 0
 t "version_gt 1.11.11bc 1.11.11aa" 0
 t "version_gt 1.11.10z 1.11.11b" 1
 
+t "version_gt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 1
+t "version_gt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 1
+t "version_gt 1.2.3a.5-rc2 foobar-1.2.3a.5-rc1" 0
+
+
 t "version_lte 1.11.10 1.11.10" 0
 t "version_lte 1.11.10 1.11.11" 0
 t "version_lte 1.11.12 1.11.11" 1
 
+t "version_lte 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 0
+t "version_lte 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 0
+t "version_lte 1.2.3a.5-rc2 foobar-1.2.3a.5-rc1" 1
+
+
 t "version_gte 1.11.10 1.11.10" 0
 t "version_gte 1.11.12 1.11.11" 0
 t "version_gte 1.11.10 1.11.11" 1
+
+t "version_gte 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 1
+t "version_gte 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 0
+t "version_gte 1.2.3a.5-rc2 foobar-1.2.3a.5-rc1" 0
 
 exit $g_ok
