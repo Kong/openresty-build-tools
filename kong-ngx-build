@@ -341,11 +341,11 @@ main() {
           "-j$NPROC"
         )
 
-        if version_gte $OPENRESTY_VER 1.11.4; then
+        if version_gte $NGINX_CORE_VER 1.11.4; then
           OPENRESTY_OPTS+=('--with-stream_realip_module')
         fi
 
-        if version_gte $OPENRESTY_VER 1.11.5; then
+        if version_gte $NGINX_CORE_VER 1.11.5; then
           OPENRESTY_OPTS+=('--with-stream_ssl_preread_module')
         fi
 
