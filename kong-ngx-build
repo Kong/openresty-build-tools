@@ -406,11 +406,24 @@ parse_version() {
   [[ -z $1 ]] && fatal 'missing arg $1 when invoking parse_version()'
   [[ -z $2 ]] && fatal 'missing arg $2 when invoking parse_version()'
 
-  # remove non-version parts of a version, ie foobar-1.2.3a.5-rc1 -> 1.2.3a.5
-  local re='^[^0-9]*([0-9a-zA-Z.]*)$'
-  local version=$(echo $1 | perl -0777 -pe "s/$re/\1/s")
+  local subj=$1
+  local -n ver=$2
+  local re='^(-rc[0-9]+$)?[^0-9]*([0-9a-zA-Z]*)(.*?)$'
 
-  IFS='.' read -r -a $2 <<< "$version"
+  while [[ $subj =~ $re ]]; do
+    if [[ ${BASH_REMATCH[1]} != "" ]]; then
+      ver+=( "${BASH_REMATCH[1]}" )
+    fi
+
+    if [[ ${BASH_REMATCH[2]} != "" ]]; then
+      ver+=( "${BASH_REMATCH[2]}" )
+    fi
+
+    subj="${BASH_REMATCH[3]}"
+    if [[ $subj == "" ]]; then
+      break
+    fi
+  done
 }
 
 parse_nginx_core_version() {
@@ -443,20 +456,9 @@ version_lt() {
   parse_version $1 version_a
   parse_version $2 version_b
 
-  local alpha_num_re='^([0-9]+)([a-zA-Z]*)$'
-  local num_a num_b
-  local alp_a alp_b
-
   for index in "${!version_a[@]}"; do
-    num_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
-    num_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\1/s")
-    [[ "$num_a" -lt "$num_b" ]] && return 0
-    [[ "$num_a" -gt "$num_b" ]] && return 1
-
-    alp_a=$(echo ${version_a[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
-    alp_b=$(echo ${version_b[index]} | perl -0777 -pe "s/$alpha_num_re/\2/s")
-    [[ "$alp_a" < "$alp_b" ]] && return 0
-    [[ "$alp_a" > "$alp_b" ]] && return 1
+    [[ "${version_a[index]}" < "${version_b[index]}" ]] && return 0
+    [[ "${version_a[index]}" > "${version_b[index]}" ]] && return 1
   done
 
   return 1
