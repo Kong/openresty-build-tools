@@ -51,6 +51,8 @@ t "version_lt 1.11.10 1.11.11" 0
 t "version_lt 1.10.11 1.11.11" 0
 t "version_lt 0.11.11 1.11.11" 0
 t "version_lt 1.11.10.11.11 1.11.11.11.11" 0
+# Check that it's not using direct string comparison
+t "version_lt 1.11.99 1.11.100" 0
 
 t "version_lt 1.11.0 1.11.0" 1
 t "version_lt 1.12.0 1.11.0" 1
