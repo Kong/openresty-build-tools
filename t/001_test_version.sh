@@ -64,6 +64,10 @@ t "version_lt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc2" 0
 t "version_lt 1.2.3a.5-rc1 foobar-1.2.3a.5-rc1" 1
 t "version_lt 1.2.3a.5-rc2 foobar-1.2.3a.5-rc1" 1
 
+# Check that it's not using direct string comparison
+t "version_lt 1.11.99 1.11.100" 0
+t "version_lt 1.1.99a 1.1.100a" 0
+
 
 t "version_gt 1.12.0 1.11.0" 0
 t "version_gt 1.12.0 1.11.0" 0

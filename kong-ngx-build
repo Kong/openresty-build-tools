@@ -413,26 +413,31 @@ parse_version() {
 
   local ver
   local subj=$1
-  local re='^(-rc[0-9]+$)?[^0-9]*([0-9a-zA-Z]*)(.*)$'
 
-  while [[ $subj =~ $re ]]; do
-    if [[ ${BASH_REMATCH[1]} != "" ]]; then
-      ver="$ver.${BASH_REMATCH[1]}"
-    fi
+  if [[ $subj =~ ^[^0-9]*(.*) ]]; then
+    subj=${BASH_REMATCH[1]}
 
-    if [[ ${BASH_REMATCH[2]} != "" ]]; then
-      ver="$ver.${BASH_REMATCH[2]}"
-    fi
+    local re='^(-rc[0-9]+$)?[.]?([0-9]+|[a-zA-Z]+)?(.*)$'
 
-    subj="${BASH_REMATCH[3]}"
-    if [[ $subj == "" ]]; then
-      break
-    fi
-  done
+    while [[ $subj =~ $re ]]; do
+      if [[ ${BASH_REMATCH[1]} != "" ]]; then
+        ver="$ver.${BASH_REMATCH[1]}"
+      fi
 
-  ver="${ver:1}"
+      if [[ ${BASH_REMATCH[2]} != "" ]]; then
+        ver="$ver.${BASH_REMATCH[2]}"
+      fi
 
-  IFS='.' read -r -a $2 <<< "$ver"
+      subj="${BASH_REMATCH[3]}"
+      if [[ $subj == "" ]]; then
+        break
+      fi
+    done
+
+    ver="${ver:1}"
+
+    IFS='.' read -r -a $2 <<< "$ver"
+  fi
 }
 
 parse_nginx_core_version() {
@@ -466,8 +471,14 @@ version_lt() {
   parse_version $2 version_b
 
   for index in "${!version_a[@]}"; do
-    [[ "${version_a[index]}" < "${version_b[index]}" ]] && return 0
-    [[ "${version_a[index]}" > "${version_b[index]}" ]] && return 1
+    if [[ ${version_a[index]} =~ ^[0-9]+$ ]]; then
+      [[ "${version_a[index]}" -lt "${version_b[index]}" ]] && return 0
+      [[ "${version_a[index]}" -gt "${version_b[index]}" ]] && return 1
+
+    else
+      [[ "${version_a[index]}" < "${version_b[index]}" ]] && return 0
+      [[ "${version_a[index]}" > "${version_b[index]}" ]] && return 1
+    fi
   done
 
   return 1
