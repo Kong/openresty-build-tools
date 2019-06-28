@@ -413,7 +413,7 @@ parse_version() {
 
   local subj=$1
   local -n ver=$2
-  local re='^(-rc[0-9]+$)?[^0-9]*([0-9a-zA-Z]*)(.*?)$'
+  local re='^(-rc[0-9]+$)?[^0-9]*([0-9a-zA-Z]*)(.*)$'
 
   while [[ $subj =~ $re ]]; do
     if [[ ${BASH_REMATCH[1]} != "" ]]; then
