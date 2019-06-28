@@ -35,7 +35,7 @@ stages:
 jobs:
  include:
    - stage: unit tests
-     script: for f in t/*.sh; do bash $f; done
+     script: (set -e; for f in t/*.sh; do bash $f; done)
      env:
 
 install:
