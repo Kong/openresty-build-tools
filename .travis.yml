@@ -15,6 +15,9 @@ compiler:
   - gcc
   - clang
 
+services:
+  - docker
+
 env:
   global:
     - JOBS=2
@@ -35,8 +38,14 @@ stages:
 jobs:
  include:
    - stage: unit tests
-     script: (set -e; for f in t/*.sh; do bash $f; done)
-     env:
+     env: BASH=3
+     script: docker run -it --rm -v $TRAVIS_BUILD_DIR:/openresty-build-tools:ro bash:$BASH bash -c "(set -e; for f in /openresty-build-tools/t/*.sh; do bash \$f; done)"
+   - stage: unit tests
+     env: BASH=4
+     script: docker run -it --rm -v $TRAVIS_BUILD_DIR:/openresty-build-tools:ro bash:$BASH bash -c "(set -e; for f in /openresty-build-tools/t/*.sh; do bash \$f; done)"
+   - stage: unit tests
+     env: BASH=5
+     script: docker run -it --rm -v $TRAVIS_BUILD_DIR:/openresty-build-tools:ro bash:$BASH bash -c "(set -e; for f in /openresty-build-tools/t/*.sh; do bash \$f; done)"
 
 install:
   - if [[ $NO_OPENRESTY_PATCHES == "1" ]]; then OPENRESTY_PATCHES=--no-openresty-patches; fi
