@@ -411,17 +411,17 @@ parse_version() {
   [[ -z $1 ]] && fatal 'missing arg $1 when invoking parse_version()'
   [[ -z $2 ]] && fatal 'missing arg $2 when invoking parse_version()'
 
+  local ver
   local subj=$1
-  local -n ver=$2
   local re='^(-rc[0-9]+$)?[^0-9]*([0-9a-zA-Z]*)(.*?)$'
 
   while [[ $subj =~ $re ]]; do
     if [[ ${BASH_REMATCH[1]} != "" ]]; then
-      ver+=( "${BASH_REMATCH[1]}" )
+      ver="$ver.${BASH_REMATCH[1]}"
     fi
 
     if [[ ${BASH_REMATCH[2]} != "" ]]; then
-      ver+=( "${BASH_REMATCH[2]}" )
+      ver="$ver.${BASH_REMATCH[2]}"
     fi
 
     subj="${BASH_REMATCH[3]}"
@@ -429,6 +429,10 @@ parse_version() {
       break
     fi
   done
+
+  ver="${ver:1}"
+
+  IFS='.' read -r -a $2 <<< "$ver"
 }
 
 parse_nginx_core_version() {
