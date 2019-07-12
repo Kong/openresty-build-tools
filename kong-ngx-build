@@ -267,9 +267,18 @@ main() {
 
     if version_lt $NGINX_CORE_VER 1.15.0; then # this is fixed in Nginx 1.15.0
       if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
-        warn "Fedora 28 or above detected, applying 'rm_glibc_crypt_r_workaround' patch..."
+        warn "Fedora 28 or above detected, applying the 'rm_glibc_crypt_r_workaround' patch..."
         pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
           patch --forward -p1 < $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-rm_glibc_crypt_r_workaround.patch || true
+        popd
+      fi
+    fi
+
+    if version_eq $OPENRESTY_VER 1.15.8.1; then # this appeared in OpenResty 1.15.8.1 and is fixed in later versions
+      if [ ! -z "$PCRE_VER" ]; then
+        warn "Building OpenResty 1.15.8.1 with static libpcre, applying the 'fix_static_libpcre_linking' patch..."
+        pushd $OPENRESTY_DOWNLOAD/bundle/ngx_lua-0.10.15
+          patch --forward -p1 < $SCRIPT_PATH/patches/openresty-$OPENRESTY_VER-fix_static_libpcre_linking.patch || true
         popd
       fi
     fi
@@ -334,10 +343,10 @@ main() {
     pushd $OPENRESTY_DOWNLOAD
       if [ ! -f Makefile ]; then
         OPENRESTY_RPATH=${OPENRESTY_RPATH:-$OPENSSL_INSTALL/lib}
-        OPENRESTY_CC_OPT="-I$OPENSSL_INSTALL/include"
-        OPENRESTY_LD_OPT="-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH"
         OPENRESTY_OPTS=(
           "--prefix=$OPENRESTY_PREFIX"
+          "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
+          "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENRESTY_RPATH'"
           "--with-pcre-jit"
           "--with-http_ssl_module"
           "--with-http_realip_module"
@@ -356,11 +365,8 @@ main() {
 
         if [ ! -z "$PCRE_VER" ]; then
           OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
-          OPENRESTY_LD_OPT="$OPENRESTY_LD_OPT -Wl,--undefined=pcre_version"
         fi
 
-        OPENRESTY_OPTS+=("--with-cc-opt='${OPENRESTY_CC_OPT}'")
-        OPENRESTY_OPTS+=("--with-ld-opt='${OPENRESTY_LD_OPT}'")
         OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
 
         if [ $DEBUG == 1 ]; then

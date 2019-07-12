@@ -1,0 +1,51 @@
+From 2014dd80fe4f299ad68c3b60a2c5f846b4286b6f Mon Sep 17 00:00:00 2001
+From: Thibault Charbonnier <thibaultcha@me.com>
+Date: Wed, 10 Jul 2019 22:41:29 -0700
+Subject: [PATCH] bugfix: ensured the 'pcre_version' symbol is preserved as
+ undefined when PCRE is statically linked.
+
+When using `--with-pcre=...`, NGINX is statically linked against
+libpcre.a. Since `pcre_version()` is unused, its symbol is stripped by
+the linker. Because lua-resty-core's `resty.core.regex` module needs it,
+we here ensure that the symbol is entered as undefined in our final
+binary.
+
+This should not be an issue for win32 builds since
+`--export-all-symbols` is already set.
+---
+ config | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/config b/config
+index 3ef8f0749..ff44482bc 100644
+--- a/config
++++ b/config
+@@ -588,5 +588,27 @@ else
+     CORE_LIBS="$CORE_LIBS $ngx_module_libs"
+ fi
+ 
++# ----------------------------------------
++
++if [ $PCRE != NO -a $PCRE != YES ]; then
++    # force pcre_version symbol to be undefined when PCRE is statically linked
++
++    ngx_feature="force undefined symbols (--undefined)"
++    ngx_feature_libs="-Wl,--undefined=printf"
++    ngx_feature_name=
++    ngx_feature_run=no
++    ngx_feature_incs="#include <stdio.h>"
++    ngx_feature_path=
++    ngx_feature_test='printf("hello");'
++
++    . auto/feature
++
++    if [ $ngx_found = yes ]; then
++        CORE_LIBS="$CORE_LIBS -Wl,--undefined=pcre_version"
++    fi
++fi
++
++# ----------------------------------------
++
+ #CFLAGS=$"$CFLAGS -DLUA_DEFAULT_PATH='\"/usr/local/openresty/lualib/?.lua\"'"
+ #CFLAGS=$"$CFLAGS -DLUA_DEFAULT_CPATH='\"/usr/local/openresty/lualib/?.so\"'"
+
