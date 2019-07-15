@@ -11,6 +11,7 @@ LUAROCKS_VER=
 PCRE_VER=
 FORCE=0
 OPENRESTY_PATCHES=master
+KONG_NGINX_MODULE=master
 DEBUG=0
 NPROC=`nproc`
 OS=
@@ -69,6 +70,14 @@ main() {
       --openresty-patches)
         OPENRESTY_PATCHES=$2
         shift 2
+        ;;
+      --kong-nginx-module)
+        KONG_NGINX_MODULE=$2
+        shift 2
+        ;;
+      --no-kong-nginx-module)
+        KONG_NGINX_MODULE=0
+        shift 1
         ;;
       -f|--force)
         FORCE=1
@@ -157,6 +166,11 @@ main() {
   OPENSSL_INSTALL=$(realpath -m $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
   OPENRESTY_INSTALL=$(realpath -m $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
 
+  if version_lt $NGINX_CORE_VER 1.13.6; then
+    # unconditionally disable module in older core since they are never tested
+    KONG_NGINX_MODULE=0
+  fi
+
   notice "Downloading the components now..."
 
   pushd $DOWNLOAD_CACHE
@@ -225,6 +239,21 @@ main() {
         fi
       fi
     fi
+
+    # lua-kong-nginx-module
+    if [ $KONG_NGINX_MODULE != 0 ]; then
+      pushd $DOWNLOAD_CACHE
+        if [ ! -d $KONG_NGINX_MODULE ]; then
+          warn "lua-kong-nginx-module source not found, cloning..."
+          git clone https://github.com/Kong/lua-kong-nginx-module
+        fi
+
+        pushd lua-kong-nginx-module
+          git fetch
+          git reset --hard origin/$KONG_NGINX_MODULE
+        popd
+      popd
+    fi
   popd
 
   notice "Patching the components now..."
@@ -253,6 +282,14 @@ main() {
             patch -p1 < $patch_file \
               || fatal "failed to apply patch: $patch_file"
           done
+
+          if [ $KONG_NGINX_MODULE != 0 ]; then
+            for patch_file in $(ls -1 $DOWNLOAD_CACHE/lua-kong-nginx-module/patches/$OPENRESTY_VER/*.patch); do
+              notice "Applying OpenResty patch $patch_file"
+              patch -p1 < $patch_file \
+                || fatal "failed to apply patch: $patch_file"
+            done
+          fi
 
           touch .patch_applied
         fi
@@ -363,6 +400,10 @@ main() {
           OPENRESTY_OPTS+=('--with-stream_ssl_preread_module')
         fi
 
+        if [ $KONG_NGINX_MODULE != 0 ]; then
+          OPENRESTY_OPTS+=('--add-module=$DOWNLOAD_CACHE/lua-kong-nginx-module')
+        fi
+
         if [ ! -z "$PCRE_VER" ]; then
           OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
         fi
@@ -379,6 +420,13 @@ main() {
 
       make -j$NPROC
       make -j$NPROC install DESTDIR=${OPENRESTY_DESTDIR}
+
+      if [ $KONG_NGINX_MODULE != 0 ]; then
+        pushd $DOWNLOAD_CACHE/lua-kong-nginx-module
+          warn "installing library files for lua-kong-nginx-module..."
+          make install LUA_LIB_DIR=$OPENRESTY_INSTALL/lualib
+        popd
+      fi
     popd
 
     succ "OpenResty $OPENRESTY_VER has been built successfully!"
@@ -523,6 +571,11 @@ show_usage() {
   echo "                                   (Patching is enabled by default)"
   echo ""
   echo "      --openresty-patches <branch> Specify an openresty-patches branch to use when applying patches."
+  echo "                                   (Defaults to \"master\")"
+  echo "      --no-kong-nginx-module       Do not include lua-kong-nginx-module while patching and compiling OpenResty."
+  echo "                                   (Patching and compiling is enabled by default for OpenResty > 1.13.6.1)"
+  echo ""
+  echo "      --kong-nginx-module <branch> Specify a lua-kong-nginx-module branch to use when patching and compiling."
   echo "                                   (Defaults to \"master\")"
   echo ""
   echo "      --luarocks <luarocks_ver>    Version of LuaRocks to build, such as 3.1.2. If absent, LuaRocks"
