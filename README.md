@@ -16,7 +16,7 @@ is so you always ends up with the same binary, every time.
 $ ./kong-ngx-build -h
 Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong.
 
-Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver> --pcre <pcre_ver>
+Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver>
 
 Required arguments:
   -p, --prefix <prefix>            Location where components should be installed.
@@ -24,20 +24,22 @@ Required arguments:
       --openssl <openssl_ver>      Version of OpenSSL to build, such as 1.1.1c.
 
 Optional arguments:
-      --no-build-cache             Build from scratch.
-                                   (WARNING: this removes everything inside the work directory)
-
-      --no-artifact-cache          Disable artifact caching and re-install all the softwares.
-                                   (WARNING: this removes everything inside the prefix directory)
-
       --no-openresty-patches       Do not apply openresty-patches while compiling OpenResty.
                                    (Patching is enabled by default)
 
       --openresty-patches <branch> Specify an openresty-patches branch to use when applying patches.
                                    (Defaults to "master")
+      --no-kong-nginx-module       Do not include lua-kong-nginx-module while patching and compiling OpenResty.
+                                   (Patching and compiling is enabled by default for OpenResty > 1.13.6.1)
+
+      --kong-nginx-module <branch> Specify a lua-kong-nginx-module branch to use when patching and compiling.
+                                   (Defaults to "master")
 
       --luarocks <luarocks_ver>    Version of LuaRocks to build, such as 3.1.2. If absent, LuaRocks
                                    will not be built.
+
+      --pcre <pcre_ver>            Version of PCRE to build, such as 8.43. If absent, PCRE will
+                                   not be build.
 
       --add-module <module_path>   Path to additional NGINX module to be built. This option can be
                                    repeated and will be passed to NGINX's configure in the order
@@ -47,10 +49,13 @@ Optional arguments:
                                    LuaJIT and OpenSSL to help debugging.
 
   -j, --jobs                       Concurrency level to use when building.
-                                   (Defaults to number of CPU cores available: 8)
+                                   (Defaults to number of CPU cores available: 12)
 
-      --work <work_dir>            The working directory to use while compiling.
+      --work <work>                The working directory to use while compiling.
                                    (Defaults to "work")
+
+  -f, --force                      Build from scratch.
+                                   (WARNING: this removes everything inside the <work> and <prefix> directories)
 
   -h, --help                       Show this message.
 
@@ -59,17 +64,17 @@ Optional ENV:
 The following ENV's are likely only utilized when building for the purposes of packaging Kong
 
   LUAROCKS_INSTALL                 Overrides the `./config --prefix` value (default is `<prefix>/luarocks`)
-  
+
   LUAROCKS_DESTDIR                 Overrides the `make install DESTDIR` (default is `/`)
-  
+
   OPENRESTY_INSTALL                Overrides the `./config --prefix` value (default is `--prefix/openresty)
-  
+
   OPENRESTY_DESTDIR                Overrides the `make install DESTDIR` (default is `/`)
-  
+
   OPENSSL_INSTALL                  Overrides the `./config --prefix` value (default is `--prefix/openssl)
-  
+
   OPENRESTY_RPATH                  Overrides the `make install DESTDIR` (default is `/`)
-  
+
 ```
 
 # Caching

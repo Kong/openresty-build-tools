@@ -30,6 +30,8 @@ env:
     - OPENRESTY=1.13.6.2 OPENSSL=1.0.2s NO_OPENRESTY_PATCHES=1
     - OPENRESTY=1.13.6.2 OPENSSL=1.1.0k
     - OPENRESTY=1.13.6.2 OPENSSL=1.1.1c
+    - OPENRESTY=1.15.8.1 OPENSSL=1.1.1c
+    - OPENRESTY=1.15.8.1 OPENSSL=1.1.1c NO_KONG_NGINX_MODULE=1
 
 stages:
   - unit tests
@@ -49,10 +51,12 @@ jobs:
 
 install:
   - if [[ $NO_OPENRESTY_PATCHES == "1" ]]; then OPENRESTY_PATCHES=--no-openresty-patches; fi
+  - if [[ $NO_KONG_NGINX_MODULE == "1" ]]; then KONG_NGINX_MODULE=--no-kong-nginx-module; fi
   - echo $OPENRESTY_PATCHES
+  - echo $KONG_NGINX_MODULE
 
 script:
-  - ./kong-ngx-build --work $WORK --prefix $PREFIX --jobs $JOBS --openresty $OPENRESTY --openssl $OPENSSL --luarocks $LUAROCKS --pcre $PCRE $OPENRESTY_PATCHES >build.log 2>&1 || (cat build.log; exit 1)
+  - ./kong-ngx-build --work $WORK --prefix $PREFIX --jobs $JOBS --openresty $OPENRESTY --openssl $OPENSSL --luarocks $LUAROCKS --pcre $PCRE $OPENRESTY_PATCHES $KONG_NGINX_MODULE >build.log 2>&1 || (cat build.log; exit 1)
   - export PATH=$PREFIX/openresty/bin:$PATH
   - export PATH=$PREFIX/luarocks/bin:$PATH
   - export PATH=$PREFIX/openssl/bin:$PATH
@@ -68,6 +72,8 @@ script:
   - (openresty -V 2>&1 | grep -F -- "--with-pcre=$WORK/pcre-$PCRE") || (openresty -V; exit 1)
   - if [[ $NO_OPENRESTY_PATCHES == "1" ]]; then [[ ! -f "$WORK/openresty-$OPENRESTY/bundle/.patch_applied" ]] || (echo "OpenResty patches mistakenly applied"; exit 1); fi
   - if [[ $NO_OPENRESTY_PATCHES != "1" ]]; then [[ -f "$WORK/openresty-$OPENRESTY/bundle/.patch_applied" ]] || (echo "OpenResty patches not applied"; exit 1); fi
+  - if [[ $OPENSSL != 1.0.* && $NO_KONG_NGINX_MODULE != "1" ]]; then (openresty -V 2>&1 | grep lua-kong-nginx-module) || (echo "Kong Nginx module not built"; exit 1); fi
+  - if [[ $OPENSSL != 1.0.* && $NO_KONG_NGINX_MODULE == "1" ]]; then ! (openresty -V 2>&1 | grep lua-kong-nginx-module) || (echo "Kong Nginx module mistakenly built"; exit 1); fi
   - openresty -V # for humans
 
 cache:
