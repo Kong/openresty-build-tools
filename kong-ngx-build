@@ -2,7 +2,7 @@
 
 set -e
 
-SCRIPT_PATH=$(dirname "$(realpath $0)")
+SCRIPT_PATH=$(dirname "$(readlink -f $0)")
 PREFIX=
 DOWNLOAD_CACHE=work
 OPENRESTY_VER=
@@ -112,8 +112,8 @@ main() {
     fatal "prefix can not be empty"
   fi
 
-  PREFIX=`realpath $PREFIX`
-  DOWNLOAD_CACHE=`realpath $DOWNLOAD_CACHE`
+  PREFIX=`readlink -f $PREFIX`
+  DOWNLOAD_CACHE=`readlink -f $DOWNLOAD_CACHE`
 
   if [ -z "$OPENRESTY_VER" ]; then
     show_usage
@@ -154,8 +154,8 @@ main() {
   OPENSSL_PREFIX=${OPENSSL_PREFIX:-$PREFIX/openssl}
   OPENRESTY_PREFIX=${OPENRESTY_PREFIX:-$PREFIX/openresty}
 
-  OPENSSL_INSTALL=$(realpath -m $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
-  OPENRESTY_INSTALL=$(realpath -m $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
+  OPENSSL_INSTALL=$(readlink -f $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
+  OPENRESTY_INSTALL=$(readlink -f $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
 
   notice "Downloading the components now..."
 
@@ -212,7 +212,7 @@ main() {
     if [ ! -z "$LUAROCKS_VER" ]; then
       LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
       LUAROCKS_PREFIX=${LUAROCKS_PREFIX:-$PREFIX/luarocks}
-      LUAROCKS_INSTALL=$(realpath -m $LUAROCKS_DESTDIR/$LUAROCKS_PREFIX)
+      LUAROCKS_INSTALL=$(readlink -f $LUAROCKS_DESTDIR/$LUAROCKS_PREFIX)
       if [ ! -f $LUAROCKS_INSTALL/bin/luarocks ]; then
         LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
         if [ ! -d $LUAROCKS_DOWNLOAD ]; then
@@ -582,7 +582,7 @@ err() {
   exit 1
 }
 
-if [[ $(basename $(realpath $0)) == "kong-ngx-build" ]]; then
+if [[ $(basename $(readlink -f $0)) == "kong-ngx-build" ]]; then
   main $@
 fi
 
