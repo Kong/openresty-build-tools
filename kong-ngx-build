@@ -166,7 +166,7 @@ main() {
   OPENSSL_INSTALL=$(realpath -m $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
   OPENRESTY_INSTALL=$(realpath -m $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
 
-  if version_lt $NGINX_CORE_VER 1.13.6; then
+  if version_lt $NGINX_CORE_VER 1.13.6 || version_lt $OPENSSL_VER 1.1; then
     # unconditionally disable module in older core since they are never tested
     KONG_NGINX_MODULE=0
   fi
