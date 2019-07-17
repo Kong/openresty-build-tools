@@ -283,14 +283,6 @@ main() {
               || fatal "failed to apply patch: $patch_file"
           done
 
-          if [ $KONG_NGINX_MODULE != 0 ]; then
-            for patch_file in $(ls -1 $DOWNLOAD_CACHE/lua-kong-nginx-module/patches/$OPENRESTY_VER/*.patch); do
-              notice "Applying OpenResty patch $patch_file"
-              patch -p1 < $patch_file \
-                || fatal "failed to apply patch: $patch_file"
-            done
-          fi
-
           touch .patch_applied
         fi
       popd
