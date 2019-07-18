@@ -339,7 +339,7 @@ main() {
           fi
 
           if ([[ $CC == "clang" ]] && version_gte $OPENSSL_VER 1.1) || [[ $CC != "clang" ]]; then
-            OPENSSL_OPTS+=("-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'")
+            OPENSSL_OPTS+=("-Wl,-rpath,'\$(LIBRPATH)'")
           fi
 
           if [ $DEBUG == 1 ]; then
