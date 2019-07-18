@@ -243,7 +243,7 @@ main() {
     # lua-kong-nginx-module
     if [ $KONG_NGINX_MODULE != 0 ]; then
       pushd $DOWNLOAD_CACHE
-        if [ ! -d $KONG_NGINX_MODULE ]; then
+        if [ ! -d lua-kong-nginx-module ]; then
           warn "lua-kong-nginx-module source not found, cloning..."
           git clone https://github.com/Kong/lua-kong-nginx-module
         fi
