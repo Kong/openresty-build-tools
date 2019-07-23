@@ -352,7 +352,12 @@ main() {
           fi
 
           if ([[ $CC == "clang" ]] && version_gte $OPENSSL_VER 1.1) || [[ $CC != "clang" ]]; then
-            OPENSSL_OPTS+=("-Wl,--enable-new-dtags,-rpath,'\$(LIBRPATH)'")
+            local ld_opts="-Wl,-rpath,'\$(LIBRPATH)'"
+            if [[ $OS != "Darwin" ]]; then
+              ld_opts="$ld_opts,--enable-new-dtags"
+            fi
+
+            OPENSSL_OPTS+=("$ld_opts")
           fi
 
           if [ $DEBUG == 1 ]; then
