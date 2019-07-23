@@ -15,8 +15,8 @@ OPENRESTY_PATCHES_DIR=
 KONG_NGINX_MODULE=master
 DEBUG=0
 NPROC=`nproc`
-OS=
-OS_VER=
+DIST=
+DIST_VER=
 NGINX_EXTRA_MODULES=()
 
 PARAMS=""
@@ -139,16 +139,16 @@ main() {
     fatal "OpenSSL version can not be empty"
   fi
 
-  # retrieve OS info of OS-specific patches
+  # retrieve DIST info of DIST-specific patches
 
   if [ -f /etc/os-release ]; then
     . /etc/os-release
-    OS=$NAME
-    OS_VER=$VERSION_ID
+    DIST=$NAME
+    DIST_VER=$VERSION_ID
 
   elif type lsb_release >/dev/null 2>&1; then
-    OS=$(lsb_release -si)
-    OS_VER=$(lsb_release -sr)
+    DIST=$(lsb_release -si)
+    DIST_VER=$(lsb_release -sr)
   fi
 
   if [ $FORCE == 1 ]; then
@@ -307,7 +307,7 @@ main() {
     # apply non Kong-specific patches
 
     if version_lt $NGINX_CORE_VER 1.15.0; then # this is fixed in Nginx 1.15.0
-      if [[ $OS == "Fedora" && $OS_VER -gt 28 ]]; then
+      if [[ $DIST == "Fedora" && $DIST_VER -gt 28 ]]; then
         warn "Fedora 28 or above detected, applying the 'rm_glibc_crypt_r_workaround' patch..."
         pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
           patch --forward -p1 < $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-rm_glibc_crypt_r_workaround.patch || true
