@@ -98,6 +98,9 @@ Repeated run will simply call `make` and `make install` again which supports
 incremental rebuild Make provides. This is especially useful when developing
 on OpenResty or NGINX C code.
 
+If caching is undesirable or dependency version changed,
+you can disable both caching with the `--force` option.
+
 # License
 
 ```
