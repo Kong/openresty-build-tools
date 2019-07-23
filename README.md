@@ -19,49 +19,55 @@ Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong.
 Usage: ./kong-ngx-build [options...] -p <prefix> --openresty <openresty_ver> --openssl <openssl_ver>
 
 Required arguments:
-  -p, --prefix <prefix>            Location where components should be installed.
-      --openresty <openresty_ver>  Version of OpenResty to build, such as 1.13.6.2.
-      --openssl <openssl_ver>      Version of OpenSSL to build, such as 1.1.1c.
+  -p, --prefix <prefix>              Location where components should be installed.
+      --openresty <openresty_ver>    Version of OpenResty to build, such as 1.13.6.2.
+      --openssl <openssl_ver>        Version of OpenSSL to build, such as 1.1.1c.
 
 Optional arguments:
-      --no-openresty-patches       Do not apply openresty-patches while compiling OpenResty.
-                                   (Patching is enabled by default)
+      --no-openresty-patches         Do not apply openresty-patches while compiling OpenResty.
+                                     (Patching is enabled by default)
 
-      --openresty-patches <branch> Specify an openresty-patches branch to use when applying patches.
-                                   (Defaults to "master")
-      --no-kong-nginx-module       Do not include lua-kong-nginx-module while patching and compiling OpenResty.
-                                   (Patching and compiling is enabled by default for OpenResty > 1.13.6.1)
+      --openresty-patches <branch>   Specify an openresty-patches branch to use when applying patches.
+                                     (Defaults to "master")
+                                     NOTE: This option is mutually exclusive with --openresty-patches-dir.
 
-      --kong-nginx-module <branch> Specify a lua-kong-nginx-module branch to use when patching and compiling.
-                                   (Defaults to "master")
+      --openresty-patches-dir <dir>  Specify the root directory of a local copy of openresty-patches
+                                     to use instead of checking out a branch from the repository.
+                                     NOTE: This option is mutually exclusive with --openresty-patches.
 
-      --luarocks <luarocks_ver>    Version of LuaRocks to build, such as 3.1.2. If absent, LuaRocks
-                                   will not be built.
+      --no-kong-nginx-module         Do not include lua-kong-nginx-module while patching and compiling OpenResty.
+                                     (Patching and compiling is enabled by default for OpenResty > 1.13.6.1)
 
-      --pcre <pcre_ver>            Version of PCRE to build, such as 8.43. If absent, PCRE will
-                                   not be build.
+      --kong-nginx-module <branch>   Specify a lua-kong-nginx-module branch to use when patching and compiling.
+                                     (Defaults to "master")
 
-      --add-module <module_path>   Path to additional NGINX module to be built. This option can be
-                                   repeated and will be passed to NGINX's configure in the order
-                                   they were specified.
+      --luarocks <luarocks_ver>      Version of LuaRocks to build, such as 3.1.2. If absent, LuaRocks
+                                     will not be built.
 
-      --debug                      Disable compile-time optimizations and memory pooling for NGINX,
-                                   LuaJIT and OpenSSL to help debugging.
+      --pcre <pcre_ver>              Version of PCRE to build, such as 8.43. If absent, PCRE will
+                                     not be build.
 
-  -j, --jobs                       Concurrency level to use when building.
-                                   (Defaults to number of CPU cores available: 12)
+      --add-module <module_path>     Path to additional NGINX module to be built. This option can be
+                                     repeated and will be passed to NGINX's configure in the order
+                                     they were specified.
 
-      --work <work>                The working directory to use while compiling.
-                                   (Defaults to "work")
+      --debug                        Disable compile-time optimizations and memory pooling for NGINX,
+                                     LuaJIT and OpenSSL to help debugging.
 
-  -f, --force                      Build from scratch.
-                                   (WARNING: this removes everything inside the <work> and <prefix> directories)
+  -j, --jobs                         Concurrency level to use when building.
+                                     (Defaults to number of CPU cores available: 12)
 
-  -h, --help                       Show this message.
+      --work <work>                  The working directory to use while compiling.
+                                     (Defaults to "work")
 
-Optional ENV:
+  -f, --force                        Build from scratch.
+                                     WARNING: This permanently removes everything inside the <work> and <prefix> directories.
 
-The following ENV's are likely only utilized when building for the purposes of packaging Kong
+  -h, --help                         Show this message.
+
+Optional environment variables:
+
+The following environment variables are likely only utilized when building for the purposes of packaging Kong
 
   LUAROCKS_INSTALL                 Overrides the `./config --prefix` value (default is `<prefix>/luarocks`)
 
