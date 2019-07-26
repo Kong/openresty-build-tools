@@ -2,7 +2,7 @@
 
 set -e
 
-SCRIPT_PATH=$(dirname "$(readlink -f -- $0)")
+SCRIPT_PATH=
 PREFIX=
 DOWNLOAD_CACHE=work
 OPENRESTY_VER=
@@ -14,8 +14,8 @@ OPENRESTY_PATCHES=master
 OPENRESTY_PATCHES_DIR=
 KONG_NGINX_MODULE=master
 DEBUG=0
-NPROC=`nproc`
-OS=$(uname -s)
+NPROC=
+OS=
 DIST=
 DIST_VER=
 NGINX_EXTRA_MODULES=()
@@ -23,6 +23,10 @@ NGINX_EXTRA_MODULES=()
 PARAMS=""
 
 main() {
+  OS=$(uname -s)
+  NPROC=$(n_proc)
+  SCRIPT_PATH=$(dirname "$(canon_path $0)")
+
   while (( "$#" )); do
     case "$1" in
       -p|--prefix)
@@ -127,8 +131,8 @@ main() {
     fatal "prefix can not be empty"
   fi
 
-  PREFIX=`readlink -f -- $PREFIX`
-  DOWNLOAD_CACHE=`readlink -f -- $DOWNLOAD_CACHE`
+  PREFIX=`canon_path $PREFIX`
+  DOWNLOAD_CACHE=`canon_path $DOWNLOAD_CACHE`
 
   if [ -z "$OPENRESTY_VER" ]; then
     show_usage
@@ -169,8 +173,8 @@ main() {
   OPENSSL_PREFIX=${OPENSSL_PREFIX:-$PREFIX/openssl}
   OPENRESTY_PREFIX=${OPENRESTY_PREFIX:-$PREFIX/openresty}
 
-  OPENSSL_INSTALL=$(readlink -f -- $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
-  OPENRESTY_INSTALL=$(readlink -f -- $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
+  OPENSSL_INSTALL=$(canon_path $OPENSSL_DESTDIR/$OPENSSL_PREFIX)
+  OPENRESTY_INSTALL=$(canon_path $OPENRESTY_DESTDIR/$OPENRESTY_PREFIX)
 
   if version_lt $NGINX_CORE_VER 1.13.6 || version_lt $OPENSSL_VER 1.1; then
     # unconditionally disable module in older core since they are never tested
@@ -232,7 +236,7 @@ main() {
     if [ ! -z "$LUAROCKS_VER" ]; then
       LUAROCKS_DESTDIR=${LUAROCKS_DESTDIR:-/}
       LUAROCKS_PREFIX=${LUAROCKS_PREFIX:-$PREFIX/luarocks}
-      LUAROCKS_INSTALL=$(readlink -f -- $LUAROCKS_DESTDIR/$LUAROCKS_PREFIX)
+      LUAROCKS_INSTALL=$(canon_path $LUAROCKS_DESTDIR/$LUAROCKS_PREFIX)
       if [ ! -f $LUAROCKS_INSTALL/bin/luarocks ]; then
         LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS_VER
         if [ ! -d $LUAROCKS_DOWNLOAD ]; then
@@ -566,6 +570,27 @@ version_gte() {
   return 1
 }
 
+canon_path() {
+  if realpath -m -- $1 >&2 2>/dev/null; then
+    realpath -m -- $1
+
+  else
+    readlink -f -- $1
+  fi
+}
+
+n_proc() {
+  if nproc >&2 2>/dev/null; then
+    nproc
+
+  elif [[ $OS == "Darwin" ]]; then
+    sysctl -n hw.physicalcpu
+
+  else
+    echo "1"
+  fi
+}
+
 show_usage() {
   echo "Build basic components (OpenResty, OpenSSL and LuaRocks) for Kong."
   echo ""
@@ -649,7 +674,7 @@ err() {
   exit 1
 }
 
-if [[ $(basename $(readlink -f -- $0)) == "kong-ngx-build" ]]; then
+if [[ $(basename $(canon_path $0)) == "kong-ngx-build" ]]; then
   main $@
 fi
 
