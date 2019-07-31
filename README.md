@@ -101,6 +101,15 @@ on OpenResty or NGINX C code.
 If caching is undesirable or dependency version changed,
 you can disable both caching with the `--force` option.
 
+# Special notes for macOS users
+`openresty-build-tools` needs a few utilities from the GNU `coreutils` suite to
+run properly on a Mac. It can be installed using [Homebrew](https://brew.sh)
+easily:
+
+```shell
+$ brew install coreutils
+```
+
 # License
 
 ```
