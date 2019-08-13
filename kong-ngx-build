@@ -340,6 +340,40 @@ main() {
         popd
       fi
     fi
+
+    # CVEs - http://nginx.org/en/security_advisories.html
+
+    if version_lt $NGINX_CORE_VER 1.15.6; then # fixed in NGINX 1.15.6+
+      #if version_lt $OPENRESTY_VER 1.13.6.3; then # also included in OpenResty 1.13.6.3+ (not yet released)
+        warn "Applying the patch for CVE-2018-16843 CVE-2018-16844..."
+        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
+          if [ ! -f $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-cve_2018_16843_cve_2018_16844.patch ]; then
+            fatal "Missing patch nginx-$NGINX_CORE_VER-cve_2018_16843_cve_2018_16844.patch"
+          fi
+          patch --forward -p1 < $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-cve_2018_16843_cve_2018_16844.patch || true
+        popd
+
+        warn "Applying the patch for CVE-2018-16845..."
+        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
+          if [ ! -f $SCRIPT_PATH/patches/nginx-patch.2018.mp4.txt ]; then
+            fatal "Missing patch nginx-patch.2018.mp4.txt"
+          fi
+          patch --forward -p0 < $SCRIPT_PATH/patches/nginx-patch.2018.mp4.txt || true
+        popd
+      #fi
+    fi
+
+    if version_lt $NGINX_CORE_VER 1.17.3; then # fixed in NGINX 1.17.3+
+      #if version_lt $OPENRESTY_VER 1.15.8.2; then # also included in OpenResty 1.15.8.2+ (not yet released)
+        warn "Applying the patch for CVE-2019-9511 CVE-2019-9513 CVE-2019-9516..."
+        pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
+          if [ ! -f $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-cve_2019_9511_cve_2019_9513_cve_2019_9516.patch ]; then
+            fatal "Missing patch nginx-$NGINX_CORE_VER-cve_2019_9511_cve_2019_9513_cve_2019_9516.patch"
+          fi
+          patch --forward -p1 < $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-cve_2019_9511_cve_2019_9513_cve_2019_9516.patch || true
+        popd
+      #fi
+    fi
   fi
 
   notice "Building the components now..."
