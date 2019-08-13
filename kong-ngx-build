@@ -583,7 +583,7 @@ version_gte() {
 }
 
 canon_path() {
-  if realpath -m -- $1 >&2 2>/dev/null; then
+  if realpath -m -- $1 2>/dev/null >&2; then
     realpath -m -- $1
 
   else
@@ -592,7 +592,7 @@ canon_path() {
 }
 
 n_proc() {
-  if nproc >&2 2>/dev/null; then
+  if nproc 2>/dev/null >&2;  then
     nproc
 
   elif [[ $OS == "Darwin" ]]; then
