@@ -332,11 +332,11 @@ main() {
       fi
     fi
 
-    if version_eq $OPENRESTY_VER 1.15.8.1; then # this appeared in OpenResty 1.15.8.1 and is fixed in later versions
+    if version_eq $OPENRESTY_VER 1.15.8; then # this occurs in OpenResty 1.15.8.1 and 1.15.8.2
       if [ ! -z "$PCRE_VER" ]; then
-        warn "Building OpenResty 1.15.8.1 with static libpcre, applying the 'fix_static_libpcre_linking' patch..."
+        warn "Building OpenResty $OPENRESTY_VER with static libpcre, applying the fix_static_libpcre_linking patch..."
         pushd $OPENRESTY_DOWNLOAD/bundle/ngx_lua-0.10.15
-          patch --forward -p1 < $SCRIPT_PATH/patches/openresty-$OPENRESTY_VER-fix_static_libpcre_linking.patch || true
+          patch --forward -p1 < $SCRIPT_PATH/patches/openresty-1.15.8.x-fix_static_libpcre_linking.patch || true
         popd
       fi
     fi
@@ -466,6 +466,9 @@ main() {
 
         if [ ! -z "$PCRE_VER" ]; then
           OPENRESTY_OPTS+=('--with-pcre=$PCRE_DOWNLOAD')
+
+        else
+          OPENRESTY_OPTS+=('--with-pcre')
         fi
 
         OPENRESTY_OPTS+=(${NGINX_EXTRA_MODULES[@]})
