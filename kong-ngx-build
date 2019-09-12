@@ -297,11 +297,15 @@ main() {
             git reset --hard origin/$OPENRESTY_PATCHES
           popd
         popd
-        OPENRESTY_PATCHES_DIR=$DOWNLOAD_CACHE/openresty-patches/
+        OPENRESTY_PATCHES_DIR=$DOWNLOAD_CACHE/openresty-patches
       fi
 
       if [[ ! -d "$OPENRESTY_PATCHES_DIR" ]]; then
         fatal "directory does not exist: $OPENRESTY_PATCHES_DIR"
+      fi
+
+      if [[ ! -d "$OPENRESTY_PATCHES_DIR/patches/$OPENRESTY_VER" ]]; then
+        fatal "no patches for OpenResty $OPENRESTY_VER (missing directory $OPENRESTY_PATCHES_DIR/patches/$OPENRESTY_VER)"
       fi
 
       pushd $OPENRESTY_DOWNLOAD/bundle
