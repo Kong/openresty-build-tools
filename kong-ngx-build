@@ -367,8 +367,8 @@ main() {
       #fi
     fi
 
-    if version_lt $NGINX_CORE_VER 1.17.3; then # fixed in NGINX 1.17.3+
-      #if version_lt $OPENRESTY_VER 1.15.8.2; then # also included in OpenResty 1.15.8.2+ (not yet released)
+    if version_lt $NGINX_CORE_VER 1.17.3 \
+       && version_lt $OPENRESTY_VER 1.15.8.2; then
         warn "Applying the patch for CVE-2019-9511 CVE-2019-9513 CVE-2019-9516..."
         pushd $OPENRESTY_DOWNLOAD/bundle/nginx-$NGINX_CORE_VER
           if [ ! -f $SCRIPT_PATH/patches/nginx-$NGINX_CORE_VER-cve_2019_9511_cve_2019_9513_cve_2019_9516.patch ]; then
