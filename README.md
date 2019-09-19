@@ -51,6 +51,8 @@ Optional arguments:
                                      repeated and will be passed to NGINX's configure in the order
                                      they were specified.
 
+      --prepare-only                 Download and patch all the necessary components
+
       --debug                        Disable compile-time optimizations and memory pooling for NGINX,
                                      LuaJIT and OpenSSL to help debugging.
 

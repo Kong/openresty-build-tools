@@ -13,6 +13,8 @@ FORCE=0
 OPENRESTY_PATCHES=
 OPENRESTY_PATCHES_DIR=
 KONG_NGINX_MODULE=master
+PREPARATION_ONLY=${PREPARATION_ONLY:-0}
+
 DEBUG=0
 NPROC=
 OS=
@@ -380,6 +382,10 @@ main() {
     fi
   fi
 
+  if [ $PREPARATION_ONLY == 1 ]; then
+    notice "Done preparing everything"
+    exit 0
+  fi
   notice "Building the components now..."
 
   # Building OpenSSL
