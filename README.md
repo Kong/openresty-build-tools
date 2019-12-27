@@ -1,3 +1,5 @@
+**This project is now part of [kong-build-tools](https://github.com/Kong/kong-build-tools)**
+
 # openresty-build-tools
 
 Reusable script for bootstrapping core components needed for Kong development.
