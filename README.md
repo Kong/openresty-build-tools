@@ -1,4 +1,9 @@
-**This project is now part of [kong-build-tools](https://github.com/Kong/kong-build-tools)**
+# !!!WARNING!!!
+
+This repository has been deprecated and is in readonly mode. Do not submit
+any PR or issues to this repository! The tools are maintained in
+the [kong-build-tools](https://github.com/Kong/kong-build-tools) repository
+instead.
 
 # openresty-build-tools
 
